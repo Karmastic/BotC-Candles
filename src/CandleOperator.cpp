@@ -14,9 +14,9 @@ CandleOperator::CandleOperator(uint8_t ledsPerCandle, uint8_t ledsPerPin, const 
     }
 
     this->maxCandles = (this->pinCount * this->ledsPerPin) / this->ledsPerCandle;
+    this->candleCount = 0;
     this->animationDirection = -1;
     this->animationPercent = min((uint8_t)100, maxBrightness);
-    this->maxBrightnessComponent = (maxBrightness * 255) / 100;
 
     this->flickering = new bool[this->maxCandles];
     this->colors = new uint32_t[this->maxCandles];
@@ -34,7 +34,8 @@ void CandleOperator::Clear()
 }
 
 void CandleOperator::SetCandleStates(JsonArray candleStates) {
-    for (size_t i = 0; i < candleStates.size() && i < this->maxCandles; i++) {
+    uint8_t newCandleCount = (uint8_t)candleStates.size();
+    for (size_t i = 0; i < newCandleCount && i < this->maxCandles; i++) {
         JsonObject candleState = candleStates[i].as<JsonObject>();
 
         uint32_t red = candleState["red"].as<uint8_t>();
@@ -45,6 +46,14 @@ void CandleOperator::SetCandleStates(JsonArray candleStates) {
         bool flickering = candleState["flickering"].as<bool>();
 
         this->SetCandleState(i, color, flickering);
+    }
+
+    if (this->candleCount > newCandleCount) {
+        for (size_t i = newCandleCount; i < this->candleCount; i++) {
+            this->SetCandleState(i, 0, false);
+        }
+
+        this->candleCount = newCandleCount;
     }
 
     this->Apply();

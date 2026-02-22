@@ -21,8 +21,8 @@ private:
     size_t pinCount;
     uint8_t maxCandles;
     uint8_t maxBrightness;
-    uint8_t maxBrightnessComponent;
     float_t animationFadeRate;
+    uint8_t candleCount; // Number of candles currently set (so we can clear candles that are no longer included)
 
     Adafruit_NeoPixel **pixels;
     bool *flickering;
