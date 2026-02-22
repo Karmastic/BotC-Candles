@@ -48,7 +48,7 @@ void CandleOperator::SetCandleStates(JsonArray candleStates) {
         this->SetCandleState(i, color, flickering);
     }
 
-    if (this->candleCount > newCandleCount) {
+    if (this->candleCount != newCandleCount) {
         for (size_t i = newCandleCount; i < this->candleCount; i++) {
             this->SetCandleState(i, 0, false);
         }
