@@ -1,0 +1,151 @@
+#include <WiFi.h>
+#include <WebSocketsClient.h> // Library for connecting via WebSocket.
+
+const char* ssid = "";         // Replace with your network SSID
+const char* password = ""; // Replace with your network password
+const char* host = "echo.websocket.org"; // WebSocket server host
+const uint16_t port = 80;               // Port for the server (use 443 for SSL)
+
+WebSocketsClient webSocket;
+unsigned long previousMillis = 0;
+const long interval = 5000; // Send a message every 5 seconds
+
+// WebSocket event handler function
+void onWebSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
+    switch (type) {
+        case WStype_DISCONNECTED:
+            Serial.println("[WS] Disconnected");
+            break;
+        case WStype_CONNECTED:
+            Serial.printf("[WS] Connected to url: %s\n", payload);
+            // Send a message immediately upon connection
+            webSocket.sendTXT("Hello World!");
+            break;
+        case WStype_TEXT:
+            Serial.printf("[WS] Received message: %s\n", payload);
+            break;
+        case WStype_BIN:
+            Serial.println("[WS] Received binary message");
+            break;
+        default:
+            break;
+    }
+}
+
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+    Serial.println();
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+
+    // Connect to Wi-Fi
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("\nWiFi connected");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    // Connect to WebSocket server
+    // Use webSocket.beginSSL() for wss:// connections and port 443
+    webSocket.begin(host, port, "/"); 
+    webSocket.onEvent(onWebSocketEvent);
+    webSocket.setReconnectInterval(5000); // Attempt to reconnect every 5s if disconnected
+}
+
+void loop() {
+    webSocket.loop(); // Required for the library to process events
+
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
+        // Send a test message periodically
+        webSocket.sendTXT("Info to be echoed back");
+    }
+}
+
+#if NOT_THIS
+
+#include <WiFi.h> 
+#include <WebServer.h>                                
+#include <WebSocketsServer.h>
+#include <ArduinoJson.h>
+
+// SSID and password of Wifi connection:
+const char* ssid = "";
+const char* password = "";
+
+// The string is the HTML for the page to be displayed
+String webpage = "<!DOCTYPE html><html><head> <title>Device Orientation</title></head><body> <h1>Device Orientation</h1> <p>Move your device to see the orientation data.</p><script> var Socket; if(window.DeviceOrientationEvent) { window.addEventListener('deviceorientation', function(event) { var orientationData = { alpha: event.alpha, beta: event.beta, gamma: event.gamma }; Socket.send(JSON.stringify(orientationData));} } window.onload = function(event) { Socket = new WebSocket('ws://' + window.location.hostname + ':81/'); }</script></body></html>";
+
+// Initialization of webserver and websocket
+WebServer server(80);                                
+WebSocketsServer webSocket = WebSocketsServer(81); 
+
+void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length);
+
+void setup() {
+  Serial.begin(115200);
+
+  WiFi.begin(ssid, password);
+  Serial.println("\nConnecting");
+
+  while(WiFi.status() != WL_CONNECTED){
+    Serial.print(".");
+    delay(100);
+  }
+
+  Serial.printf("\nConnected to the WiFi network '%s'\n", ssid);
+  Serial.println("");
+  Serial.println("------------------------------");
+  Serial.printf("Connected to: %s\n", ssid);
+  Serial.printf("IP address: %s\n", WiFi.localIP().toString());
+  
+  server.on("/", []() { 
+    server.send(200, "text/html", webpage);
+  });
+  server.begin();
+  
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
+}
+
+void loop() {
+  server.handleClient(); 
+  webSocket.loop();
+}
+
+void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {  
+  switch (type) {                                     // switch on the type of information sent
+    case WStype_DISCONNECTED:                         // if a client is disconnected, then type == WStype_DISCONNECTED
+      Serial.println("Client " + String(num) + " disconnected");
+      break;
+    case WStype_CONNECTED:                            // if a client is connected, then type == WStype_CONNECTED
+      Serial.println("Client " + String(num) + " connected");
+      // optionally you can add code here what to do when connected
+      break;
+    case WStype_TEXT:                                 // if a client has sent data, then type == WStype_TEXT
+      // try to decipher the JSON string received
+      StaticJsonDocument<200> doc;                    // create a JSON container
+      DeserializationError error = deserializeJson(doc, payload);
+      if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.f_str());
+        return;
+      }
+      else {
+        // JSON string was received correctly, so information can be retrieved:
+        const char* orientation_alpha = doc["alpha"];
+        const char* orientation_beta = doc["beta"];
+        const char* orientation_gamma = doc["gamma"];
+        Serial.print("Alpha = " + String(orientation_alpha) + "\t");
+        Serial.print("Beta = " + String(orientation_beta) + "\t");
+        Serial.println("Gamma = " + String(orientation_gamma));
+      }
+      break;
+  }
+}
+#endif

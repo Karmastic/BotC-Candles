@@ -1,0 +1,69 @@
+#include <Arduino.h>
+#include <Adafruit_NeoPixel.h>
+
+#define LED_PIN 2
+#define LIGHTSET0_PIN 13
+
+#define PIN 13
+#define NUMPIXELS 4
+
+// put function declarations here:
+// int myFunction(int, int);
+
+// void setup() {
+//   // put your setup code here, to run once:
+//   Serial.begin(115200);
+//   pinMode(LED_PIN, OUTPUT);
+//   pinMode(LIGHTSET0_PIN, OUTPUT);
+// }
+
+// void loop() {
+//   digitalWrite(LED_PIN, HIGH);
+//   digitalWrite(LIGHTSET0_PIN, HIGH);
+//   delay(500);
+//   digitalWrite(LED_PIN, LOW);
+//   digitalWrite(LIGHTSET0_PIN, LOW);
+//   delay(500);
+//   Serial.print(".");
+// }
+
+// // put function definitions here:
+// // int myFunction(int x, int y) {
+// //   return x + y;
+// // }
+
+#include <Adafruit_NeoPixel.h>
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
+
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+#define DELAYVAL 500
+
+void setup() {
+#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+  clock_prescale_set(clock_div_1);
+#endif
+
+  Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(LIGHTSET0_PIN, OUTPUT);
+
+  pixels.begin();
+}
+
+void loop() {
+  pixels.clear();
+
+  for(int i=0; i<NUMPIXELS; i++) {
+
+    pixels.setPixelColor(i, pixels.Color(0, 150, 0));
+    pixels.show();
+
+    digitalWrite(LED_PIN, (i & 0x01) == 0 ? LOW : HIGH);
+
+    delay(DELAYVAL);
+  }
+
+  Serial.print(".");
+}
