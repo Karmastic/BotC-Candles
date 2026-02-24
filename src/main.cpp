@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
+#include <EEPROM.h>
 #include <WebServer.h>
 #include <WebSocketsClient.h>
 #include <WiFi.h>
@@ -22,6 +23,19 @@ WebServer server(80);
 const uint8_t pins[] = { 13 };
 CandleOperator co(1, 4, pins, 1, 0.05, 50);
 
+#pragma pack(push, 2)
+struct Config {
+    uint32_t signature;
+    char APIToken[64];
+    char APICandleID[64];
+    char SSID[32];
+    char WiFiPassword[32];
+    uint8_t reserved[1024];
+} config;
+#pragma pack(pop)
+
+#define EEPROM_SIZE sizeof(Config)
+#define EEPROM_SIGNATURE 0xDEADBEEF
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     switch(type) {
@@ -63,11 +77,33 @@ void setup() {
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
+    pinMode(LED_PIN, OUTPUT);
+
     Serial.println();
     Serial.println();
     Serial.println();
 
-    WiFi.begin(WiFiSSID, WiFiPassword);
+    EEPROM.begin(EEPROM_SIZE);
+    EEPROM.readBytes(0, &config, sizeof(config));
+
+    if (config.signature != EEPROM_SIGNATURE) {
+        Serial.println("\nStored Config Invalid - initializing...");
+        strncpy(config.APIToken, APIToken, sizeof(config.APIToken));
+        strncpy(config.APICandleID, APICandleID, sizeof(config.APICandleID));
+        strncpy(config.SSID, WiFiSSID, sizeof(config.SSID));
+        strncpy(config.WiFiPassword, WiFiPassword, sizeof(config.WiFiPassword));
+        config.signature = EEPROM_SIGNATURE;
+        auto written = EEPROM.writeBytes(0, &config, sizeof(config));
+        Serial.printf("%d bytes written to EEPROM\n", written);
+    } else {
+        Serial.println("\nReusing Stored Config...");
+    }
+    EEPROM.end();
+
+    Serial.printf("\nConnecting to WiFi network: %s\n", config.SSID);
+    Serial.println();
+ 
+    WiFi.begin(config.SSID, config.WiFiPassword);
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
@@ -77,7 +113,7 @@ void setup() {
     Serial.println(WiFi.localIP());
 
     char url[256];
-    snprintf(url, sizeof(url), "%s%s?token=%s", APIRootCandleURL, APICandleID, APIToken);
+    snprintf(url, sizeof(url), "%s%s?token=%s", APIRootCandleURL, config.APICandleID, config.APIToken);
     webSocket.beginSSL(APIHost, APIPort, url);
     webSocket.onEvent(webSocketEvent);
     webSocket.setReconnectInterval(1000); // Default reconnect interval is 500.
