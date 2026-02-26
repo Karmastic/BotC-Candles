@@ -44,7 +44,6 @@ void WiFiConnectTask::loop()
     }
     else
     {
-        this->debugOutput->printf("%lld - %lld\n", esp_timer_get_time(), this->timeoutTime);
         if (esp_timer_get_time() >= this->timeoutTime)
         {
             this->debugOutput->println("\nWiFi connection timed out");
