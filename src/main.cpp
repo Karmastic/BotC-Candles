@@ -29,8 +29,7 @@ void setup() {
     ITask *activityLEDTask = new ActivityLEDTask(&debug, LED_PIN, LED_BLINK_INTERVAL_MS);
     appTasks->AddTask(activityLEDTask);
 
-    std::function<void(void)> wifiCB = [](void) -> void {
-        auto appTasks = AppTasks::Instance();
+    std::function<void(void)> wifiCB = [appTasks](void) -> void {
         appTasks->RemoveTask(WiFiSelectTask::TaskName);
         appTasks->ActivateTask(BotCTask::TaskName);
         appTasks->ActivateTask(ActivityLEDTask::TaskName);
