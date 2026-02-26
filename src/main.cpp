@@ -14,6 +14,8 @@
 #define LED_PIN 2
 #define LED_BLINK_INTERVAL_MS (500 * 1000)
 
+static SavedConfig config;
+
 void setup()
 {
     Serial.begin(115200);
@@ -21,9 +23,9 @@ void setup()
     Serial.println();
     Serial.println();
 
-    IDebugStream &debug = *(new SerialDebugStream(Serial));
-    SavedConfig config;
-    bool loaded = config.LoadConfig(debug);
+    IDebugStream *pDebug = new SerialDebugStream(Serial);
+    IDebugStream& debug = *pDebug;
+    config.Load(debug);
 
     AppTasks *appTasks = new AppTasks(&debug);
     ITask *botCTask = new BotCTask(&debug, config);
@@ -32,30 +34,30 @@ void setup()
     appTasks->AddTask(activityLEDTask);
     appTasks->ActivateTask(ActivityLEDTask::TaskName);
 
-    std::function<void(void)> wifiCB = [appTasks](void) -> void
+    std::function<void(void)> wifiCB = [appTasks, pDebug](void) -> void
     {
         appTasks->RemoveTask(WiFiConnectTask::TaskName);
         appTasks->ActivateTask(BotCTask::TaskName);
         appTasks->RemoveTask(SelectNetworkTask::TaskName);
+
+        // In case we changed networks, save it once we successfully connect
+        // NOTE: If nothing changes, this won't actually write to EEPROM.
+        config.Save(*pDebug);
     };
     std::function<void(void)> failCB = [appTasks](void) -> void
     {
         appTasks->DeactivateTask(WiFiConnectTask::TaskName);
         appTasks->ActivateTask(SelectNetworkTask::TaskName);
     };
-    ITask *wifiTask = new WiFiConnectTask(&debug, config, loaded, wifiCB, failCB);
+    ITask *wifiTask = new WiFiConnectTask(&debug, config, wifiCB, failCB);
     appTasks->AddTask(wifiTask);
 
-    std::function<void(const char *ssid, const char *pwd)> selectedCB = [appTasks, &config](const char *ssid, const char *pwd) -> void
+    std::function<void(const char *ssid, const char *pwd)> selectedCB = [appTasks](const char *ssid, const char *pwd) -> void
     {
-        Serial.printf("Selected WiFi network: %s (%s)\n", ssid, pwd);
-
         memset(config.SSID, 0, sizeof(config.SSID));
         memset(config.WiFiPassword, 0, sizeof(config.WiFiPassword));
         strcpy(config.SSID, ssid);
         strcpy(config.WiFiPassword, pwd);
-
-        // config.SaveConfig(debug);
 
         // Deactivate selection task in case we need to try again
         appTasks->DeactivateTask(SelectNetworkTask::TaskName);
@@ -70,6 +72,7 @@ void setup()
     }
     else
     {
+        // NOTE: This will block until it connects or fails
         appTasks->ActivateTask(WiFiConnectTask::TaskName);
     }
 }

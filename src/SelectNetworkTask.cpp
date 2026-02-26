@@ -39,7 +39,6 @@ void SelectNetworkTask::setup()
     }
 
     snprintf(buf, sizeof(buf), "BotC-%06X", ESP.getEfuseMac() & 0xFFFFFF);
-
     WiFi.softAP(buf, nullptr, 1, false);
 
     AsyncWebServer::begin();
@@ -50,14 +49,6 @@ void SelectNetworkTask::setup()
 void SelectNetworkTask::loop()
 {
     delay(10);
-}
-
-void SelectNetworkTask::onRemove()
-{
-    delay(500);
-    AsyncWebServer::end();
-    WiFi.softAPdisconnect(true);
-    Task::onRemove();
 }
 
 void SelectNetworkTask::handleNotFound(AsyncWebServerRequest *request)
@@ -94,9 +85,13 @@ void SelectNetworkTask::handleSelectionSubmit(AsyncWebServerRequest *request)
     {
         ssid = ssid.substring(0, end - ssid.c_str());
     }
-    this->debugOutput->printf("Received WiFi credentials: SSID=%s, PWD=%s\n", ssid.c_str(), pwd.c_str());
+    this->debugOutput->printf("Received WiFi credentials: SSID=%s\n", ssid.c_str());
+
+    request->send(200, "text/plain", "Credentials received. Attempting to connect (this AP will now shut down)...");
+
+    delay(1000);
+    AsyncWebServer::end();
+    WiFi.softAPdisconnect();
 
     this->cb(ssid.c_str(), pwd.c_str());
-
-    request->send(200, "text/plain", "Credentials received. Attempting to connect...");
 }
