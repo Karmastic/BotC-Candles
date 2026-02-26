@@ -12,7 +12,6 @@ public:
 
     virtual size_t print(const char *message) {
         auto ret = this->serialPort.print(message);
-        this->serialPort.flush();
         return ret;
     };
 
@@ -24,13 +23,11 @@ public:
     virtual size_t print(const Printable& x)
     {
         auto ret = x.printTo(serialPort);
-        this->serialPort.flush();
         return ret;
     }
 
     virtual size_t println(const char message[]) {
         auto ret = this->serialPort.println(message);
-        this->serialPort.flush();
         return ret;
     };
 
@@ -47,7 +44,6 @@ public:
         va_start(args, format);
         vsnprintf(buffer, sizeof(buffer), format, args);
         size_t ret = this->serialPort.print(buffer);
-        this->serialPort.flush();
         va_end(args);
 
         return ret;
