@@ -6,6 +6,17 @@ public:
 
     virtual void setup() = 0;
 
-    // Run loop.  Returns true if task is complete and should be removed from active tasks
-    virtual bool loop() = 0;
+    // Run loop
+    virtual void loop() = 0;
+
+    virtual void onRemove() = 0;
+
+    enum class TaskState {
+        Inactive,
+        Active,
+        Terminal
+    };
+
+    virtual TaskState GetState() = 0;
+    virtual bool SetState(TaskState state) = 0;
 };

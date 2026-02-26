@@ -3,7 +3,7 @@
 #include "WSClient.h"
 
 WSClient::WSClient(IDebugStream *debugOutput, const char *host, const char *url, bool useSSL, uint16_t port, uint32_t reconnectInterval) {
-    this->debugOutput = debugOutput;
+    this->debug = debugOutput;
     this->host = host;
     this->url = url;
     this->useSSL = useSSL;
@@ -16,18 +16,18 @@ WSClient::WSClient(IDebugStream *debugOutput, const char *host, const char *url,
 void WSClient::handleEvent(WStype_t type, uint8_t * payload, size_t length) {
     switch(type) {
         case WStype_DISCONNECTED:
-            this->debugOutput->printf("[WSClient] Disconnected!\n");
+            this->debug->printf("[WSClient] Disconnected!\n");
             break;
 
         case WStype_CONNECTED:
-            this->debugOutput->printf("[WSClient] Connected to url: %s\n",  payload);
+            this->debug->printf("[WSClient] Connected to url: %s\n",  payload);
 
             // send message to server when Connected
             // this->wsClient.sendTXT("Connected");
             break;
 
         case WStype_TEXT:
-            this->debugOutput->printf("[WSClient] get text: %s\n", payload);
+            this->debug->printf("[WSClient] get text: %s\n", payload);
             this->handlePayload(payload, length);
 
 			// send message to server
@@ -35,7 +35,7 @@ void WSClient::handleEvent(WStype_t type, uint8_t * payload, size_t length) {
             break;
 
         case WStype_BIN:
-            this->debugOutput->printf("[WSClient] get binary length: %u\n", length);
+            this->debug->printf("[WSClient] get binary length: %u\n", length);
             // hexdump(payload, length);
 
             // send data to server

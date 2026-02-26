@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "AppTasks.h"
 
 static AppTasks *instance = nullptr;
@@ -35,13 +37,18 @@ void AppTasks::AddTask(ITask *task) {
 }
 
 ITask *AppTasks::RemoveTask(const char *taskName) {
+    this->debugOutput->printf("[AppTasks.RemoveTask] %s...\n", taskName);
+
     for (auto it = this->tasks.begin(); it != this->tasks.end(); ++it) {
-        if ((*it)->Name() == taskName) {
-            this->DeactivateTask(taskName);
-            this->tasks.erase(it);
+        ITask *task = *it;
+        if (0 == strcmp(task->Name(), taskName)) {
+            if (task->GetState() != ITask::TaskState::Terminal) {
+                this->DeactivateTask(taskName);
+                this->debugOutput->printf("[AppTasks] Marking Task %s as Terminal\n", taskName);
+                task->SetState(ITask::TaskState::Terminal);
+            }
 
-            return *it;
-
+            return task;
         }
     }
 
@@ -49,20 +56,20 @@ ITask *AppTasks::RemoveTask(const char *taskName) {
 }
 
 void AppTasks::ActivateTask(const char *taskName) {
-    for (auto it = this->activeTasks.begin(); it != this->activeTasks.end(); ++it) {
-        if ((*it)->Name() == taskName) {
-            this->debugOutput->printf("!!!! [AppTasks] Task %s already active - skipping. !!!!\n", taskName);
-
-            return;
-        }
-    }
+    this->debugOutput->printf("[AppTasks.ActivateTask] %s...\n", taskName);
 
     for (auto it = this->tasks.begin(); it != this->tasks.end(); ++it) {
-        if ((*it)->Name() == taskName) {
-            this->activeTasks.push_back(*it);
+        ITask *task = *it;
+        if (0 == strcmp(task->Name(), taskName)) {
+            if (task->GetState() == ITask::TaskState::Active) {
+                this->debugOutput->printf("!!!! [AppTasks] Task %s already active - skipping. !!!!\n", taskName);
+            } else if (task->GetState() == ITask::TaskState::Inactive) {
+                this->debugOutput->printf("[AppTasks] Activating Task %s\n", taskName);
+                task->SetState(ITask::TaskState::Active);
 
-            // Run setup for task immediately upon activation
-            (*it)->setup();
+                // Run setup for task immediately upon activation
+                task->setup();
+            }
 
             return;
         }
@@ -72,27 +79,33 @@ void AppTasks::ActivateTask(const char *taskName) {
 }
 
 void AppTasks::DeactivateTask(const char *taskName) {
-    for (auto it = this->activeTasks.begin(); it != this->activeTasks.end(); ++it) {
-        if ((*it)->Name() == taskName) {
-            this->debugOutput->printf("[AppTasks] Deactivating Task %s\n", (*it)->Name());
-            this->activeTasks.erase(it);
+    this->debugOutput->printf("[AppTasks.DeactivateTask] %s...\n", taskName);
 
+    for (auto it = this->tasks.begin(); it != this->tasks.end(); ++it) {
+        ITask *task = *it;
+        if (0 == strcmp(task->Name(), taskName)) {
+            if (task->GetState() == ITask::TaskState::Active) {
+                this->debugOutput->printf("[AppTasks] Deactivating Task %s\n", taskName);
+                task->SetState(ITask::TaskState::Inactive);
+            }
             break;
         }
     }
 }
 
 void AppTasks::ProcessLoop() {
-    std::vector<ITask*> completedTasks;
-
-    for (auto it = this->activeTasks.begin(); it != this->activeTasks.end(); ++it) {
-        if ((*it)->loop()) {
-            this->debugOutput->printf("[AppTasks] Task %s completed - pending for deactivation.\n", (*it)->Name());
-            completedTasks.push_back(*it);
+    for (auto it = this->tasks.begin(); it != this->tasks.end();) {
+        ITask *task = *it;
+        if (task->GetState() == ITask::TaskState::Active) {
+            task->loop();
         }
-    }
 
-    for (auto it = completedTasks.begin(); it != completedTasks.end(); ++it) {
-        this->DeactivateTask((*it)->Name());
+        if (task->GetState() == ITask::TaskState::Terminal) {
+            this->debugOutput->printf("[AppTasks] Removing Terminal Task %s\n", task->Name());
+            it = this->tasks.erase(it);
+            task->onRemove();
+        } else {
+            ++it;
+        }
     }
 }

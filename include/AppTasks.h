@@ -22,7 +22,7 @@ public:
     IDebugStream *GetDebugOutput() { return this->debugOutput; }
 
 private:
-    std::vector<ITask*> activeTasks;
     std::vector<ITask*> tasks;
+
     IDebugStream *debugOutput;
 };

@@ -18,7 +18,7 @@ public:
     bool SendText(const char *message);
 
 private:
-    IDebugStream *debugOutput;
+    IDebugStream *debug;
     WebSocketsClient wsClient;
 
     bool useSSL;

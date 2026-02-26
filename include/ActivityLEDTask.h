@@ -1,7 +1,7 @@
 #include "IDebugStream.h"
-#include "ITask.h"
+#include "Task.h"
 
-class ActivityLEDTask : public ITask {
+class ActivityLEDTask : public Task {
 public:    
     ActivityLEDTask(IDebugStream *debugOutput, uint8_t pin, uint32_t blinkIntervalMs = 500);
 
@@ -9,10 +9,9 @@ public:
 
     virtual const char *Name();
     virtual void setup();
-    virtual bool loop();
+    virtual void loop();
 
 private:
-    IDebugStream *debugOutput;
     uint8_t pin;
     uint32_t blinkIntervalMs;
     uint64_t nextLEDBlinkTime;

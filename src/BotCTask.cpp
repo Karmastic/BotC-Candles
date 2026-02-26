@@ -16,10 +16,10 @@ static const char *urlFromConfig(SavedConfig& config) {
 } 
 
 BotCTask::BotCTask(IDebugStream *debugOutput, SavedConfig& config)
-        : WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000),
-        candleOperator(1, 4, pins, 1, 0.05, 50),
-        WebServer(80) {
-    this->debugOutput = debugOutput;
+        : Task(debugOutput)
+        , WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000)
+        , candleOperator(1, 4, pins, 1, 0.05, 50)
+        , WebServer(80) {
     this->config = config;
 }
 
@@ -40,13 +40,10 @@ void BotCTask::setup() {
     this->debugOutput->println("HTTP server started");
 }
 
-bool BotCTask::loop() {
+void BotCTask::loop() {
     WSClient::doLoop();
     WebServer::handleClient();
     this->candleOperator.Animate();
-
-    // This task never ends so we'll always return false.
-    return false;
 }
 
 void BotCTask::handlePayload(uint8_t *payload, size_t length) {

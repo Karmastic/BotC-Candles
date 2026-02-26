@@ -3,13 +3,12 @@
 #include <WebSocketsClient.h>
 #include <WebServer.h>
 
-#include "ITask.h"
-#include "IDebugStream.h"
 #include "CandleOperator.h"
 #include "SavedConfig.h"
+#include "Task.h"
 #include "WSClient.h"
 
-class BotCTask : public ITask, private WSClient, private WebServer {
+class BotCTask : public Task, private WSClient, private WebServer {
 public:    
     BotCTask(IDebugStream *debugOutput, SavedConfig& config);
 
@@ -33,10 +32,9 @@ public:
     void handleClear();
 
     void setup();
-    bool loop();
+    void loop();
 
 private:
     CandleOperator candleOperator;
-    IDebugStream *debugOutput;
     SavedConfig config;
 };

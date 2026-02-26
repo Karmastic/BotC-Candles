@@ -5,7 +5,7 @@
 const char *ActivityLEDTask::TaskName = "ActivityLEDTask";
 
 ActivityLEDTask::ActivityLEDTask(IDebugStream *debugOutput, uint8_t pin, uint32_t blinkIntervalMs)
-        : debugOutput(debugOutput)
+        : Task(debugOutput)
         , pin(pin)
         , blinkIntervalMs(blinkIntervalMs)
         , nextLEDBlinkTime(0) {
@@ -19,12 +19,10 @@ void ActivityLEDTask::setup() {
     pinMode(this->pin, OUTPUT);
 }
 
-bool ActivityLEDTask::loop() {
+void ActivityLEDTask::loop() {
     uint64_t time = esp_timer_get_time();
     if (time >= nextLEDBlinkTime) {
         nextLEDBlinkTime = time + this->blinkIntervalMs;
         digitalWrite(this->pin, !digitalRead(this->pin));
     }
-
-    return false;
 }

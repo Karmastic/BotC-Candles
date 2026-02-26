@@ -8,6 +8,7 @@
 #include "BotCTask.h"
 #include "SerialDebugStream.h"
 #include "SavedConfig.h"
+#include "WiFiSelectTask.h"
 
 #define LED_PIN 2
 #define LED_BLINK_INTERVAL_MS (500 * 1000)
@@ -17,34 +18,26 @@ void setup() {
     Serial.setDebugOutput(true);
     Serial.println();
     Serial.println();
-    Serial.println();
 
     IDebugStream &debug = *(new SerialDebugStream(Serial));
-
-    AppTasks *appTasks = new AppTasks(&debug);
-
     SavedConfig config;
     bool loaded = config.LoadConfig(debug);
 
-    debug.printf("\nConnecting to WiFi network: %s\n\n", config.SSID);
- 
-    WiFi.begin(config.SSID, config.WiFiPassword);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        debug.print(".");
-    }
-    debug.println("\nWiFi connected");
-    debug.print("IP address: ");
-    debug.println(WiFi.localIP());
-
+    AppTasks *appTasks = new AppTasks(&debug);
     ITask *botCTask = new BotCTask(&debug, config);
     appTasks->AddTask(botCTask);
-
     ITask *activityLEDTask = new ActivityLEDTask(&debug, LED_PIN, LED_BLINK_INTERVAL_MS);
     appTasks->AddTask(activityLEDTask);
 
-    appTasks->ActivateTask(BotCTask::TaskName);
-    appTasks->ActivateTask(ActivityLEDTask::TaskName);
+    std::function<void(void)> wifiCB = [](void) -> void {
+        auto appTasks = AppTasks::Instance();
+        appTasks->RemoveTask(WiFiSelectTask::TaskName);
+        appTasks->ActivateTask(BotCTask::TaskName);
+        appTasks->ActivateTask(ActivityLEDTask::TaskName);
+    };
+    ITask *wifiTask = new WiFiSelectTask(&debug, config, loaded, wifiCB);
+    appTasks->AddTask(wifiTask);
+    appTasks->ActivateTask(WiFiSelectTask::TaskName);
 }
 
 void loop() {
