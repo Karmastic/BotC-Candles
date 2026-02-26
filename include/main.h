@@ -1,3 +1,5 @@
+#pragma once
+
 void handle_OnConnect();
 void handle_NotFound();
 void handle_update();
