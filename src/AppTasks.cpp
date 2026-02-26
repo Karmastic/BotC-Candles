@@ -1,6 +1,13 @@
 #include "AppTasks.h"
 
+static AppTasks *instance = nullptr;
+
 AppTasks::AppTasks(IDebugStream *debugOutput) : debugOutput(debugOutput) {
+    instance = this;
+}
+
+AppTasks *AppTasks::Instance() {
+    return instance;
 }
 
 ITask *AppTasks::LookupTask(const char *taskName) {

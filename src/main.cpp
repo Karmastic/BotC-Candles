@@ -3,6 +3,7 @@
 #include <WiFi.h>
 
 #include "main.h"
+#include "ActivityLEDTask.h"
 #include "AppTasks.h"
 #include "BotCTask.h"
 #include "SerialDebugStream.h"
@@ -10,9 +11,6 @@
 
 #define LED_PIN 2
 #define LED_BLINK_INTERVAL_MS (500 * 1000)
-static uint64_t nextLEDBlinkTime = 0;
-
-AppTasks appTasks(new SerialDebugStream(Serial));
 
 void setup() {
     Serial.begin(115200);
@@ -23,7 +21,7 @@ void setup() {
 
     IDebugStream &debug = *(new SerialDebugStream(Serial));
 
-    pinMode(LED_PIN, OUTPUT);
+    AppTasks *appTasks = new AppTasks(&debug);
 
     SavedConfig config;
     bool loaded = config.LoadConfig(debug);
@@ -40,17 +38,15 @@ void setup() {
     debug.println(WiFi.localIP());
 
     ITask *botCTask = new BotCTask(&debug, config);
-    appTasks.AddTask(botCTask);
+    appTasks->AddTask(botCTask);
 
-    appTasks.ActivateTask(BotCTask::TaskName);
+    ITask *activityLEDTask = new ActivityLEDTask(&debug, LED_PIN, LED_BLINK_INTERVAL_MS);
+    appTasks->AddTask(activityLEDTask);
+
+    appTasks->ActivateTask(BotCTask::TaskName);
+    appTasks->ActivateTask(ActivityLEDTask::TaskName);
 }
 
 void loop() {
-    appTasks.ProcessLoop();
- 
-    uint64_t time = esp_timer_get_time();
-    if (time >= nextLEDBlinkTime) {
-        nextLEDBlinkTime = time + LED_BLINK_INTERVAL_MS;
-        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    }
-}
+    AppTasks::Instance()->ProcessLoop();
+ }

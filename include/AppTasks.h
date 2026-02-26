@@ -7,6 +7,8 @@ class AppTasks {
 public:
     AppTasks(IDebugStream *debugOutput);
 
+    static AppTasks *Instance();
+
     ITask *LookupTask(const char *taskName);
 
     void AddTask(ITask *task);
