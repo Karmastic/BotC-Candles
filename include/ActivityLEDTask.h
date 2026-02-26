@@ -1,4 +1,5 @@
-#include "IDebugStream.h"
+#pragma once
+
 #include "Task.h"
 
 class ActivityLEDTask : public Task {

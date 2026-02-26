@@ -19,7 +19,7 @@ BotCTask::BotCTask(IDebugStream *debugOutput, SavedConfig& config)
         : Task(debugOutput)
         , WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000)
         , candleOperator(1, 4, pins, 1, 0.05, 50)
-        , WebServer(80) {
+        , AsyncWebServer(80) {
     this->config = config;
 }
 
@@ -31,18 +31,21 @@ void BotCTask::setup() {
     // Connect to WebSocket server
     this->connect();
 
-    WebServer::onNotFound(std::bind(&BotCTask::handleNotFound, this));
-    WebServer::on("/u", std::bind(&BotCTask::handleUpdate, this));
-    WebServer::on("/c", std::bind(&BotCTask::handleClear, this));
+    AsyncWebServer::onNotFound(std::bind(&BotCTask::handleNotFound, this, std::placeholders::_1));
+    AsyncWebServer::on(AsyncURIMatcher::exact("/u"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        this->handleUpdate(request);
+    });
+    AsyncWebServer::on(AsyncURIMatcher::exact("/c"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        this->handleClear(request);
+    });
 
-    WebServer::begin();
+    AsyncWebServer::begin();
 
     this->debugOutput->println("HTTP server started");
 }
 
 void BotCTask::loop() {
     WSClient::doLoop();
-    WebServer::handleClient();
     this->candleOperator.Animate();
 }
 
@@ -70,16 +73,16 @@ void BotCTask::handlePayload(uint8_t *payload, size_t length) {
     this->candleOperator.SetCandleStates(data);
 }
 
-void BotCTask::handleNotFound() {
-  this->send(404, "text/plain", "Not found");
+void BotCTask::handleNotFound(AsyncWebServerRequest *request) {
+  request->send(404, "text/plain", "Not found");
 }
 
-void BotCTask::handleUpdate() {
+void BotCTask::handleUpdate(AsyncWebServerRequest *request) {
     this->SendText(REQUEST_STATUS_MESSAGE);
-    this->send(200, "text/html", "Request sent");
+    request->send(200, "text/html", "Request sent");
 }
 
-void BotCTask::handleClear() {
+void BotCTask::handleClear(AsyncWebServerRequest *request) {
     this->Clear();
-    this->send(200, "text/html", "OK");
+    request->send(200, "text/html", "OK");
 }

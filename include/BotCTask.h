@@ -1,14 +1,14 @@
 #pragma once
 
 #include <WebSocketsClient.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 
 #include "CandleOperator.h"
 #include "SavedConfig.h"
 #include "Task.h"
 #include "WSClient.h"
 
-class BotCTask : public Task, private WSClient, private WebServer {
+class BotCTask : public Task, private WSClient, private AsyncWebServer {
 public:    
     BotCTask(IDebugStream *debugOutput, SavedConfig& config);
 
@@ -27,9 +27,9 @@ public:
     virtual void handlePayload(uint8_t * payload, size_t length);
 
     // WebServer implementation
-    void handleNotFound();
-    void handleUpdate();
-    void handleClear();
+    void handleNotFound(AsyncWebServerRequest *request);
+    void handleUpdate(AsyncWebServerRequest *request);
+    void handleClear(AsyncWebServerRequest *request);
 
     void setup();
     void loop();
