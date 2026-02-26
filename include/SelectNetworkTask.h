@@ -21,7 +21,6 @@ public:
 
     void setup() override;
     void loop() override;
-    void onRemove() override;
 
     // WebServer implementation
     void handleNotFound(AsyncWebServerRequest *request);

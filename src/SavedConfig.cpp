@@ -10,28 +10,50 @@ const char *SavedConfig::RootCandleURL = APIRootCandleURL;
 const char *SavedConfig::Host = APIHost;
 uint32_t SavedConfig::Port = APIPort;
 
-bool SavedConfig::LoadConfig(IDebugStream& debug) {
-    bool loaded = false;
-    
+static SavedConfig storedConfig;
+
+void SavedConfig::Load(IDebugStream &debug)
+{
     EEPROM.begin(EEPROM_SIZE);
     EEPROM.readBytes(0, this, sizeof(*this));
 
-    if (this->signature != EEPROM_SIGNATURE) {
-        debug.println("\nStored Config Invalid - initializing...");
+    if (this->signature != EEPROM_SIGNATURE)
+    {
+        memset(this, 0, sizeof(*this));
+        debug.printf("\nStored Config Invalid (sig = 0x%x and not 0x%x) - initializing...\n", this->signature, EEPROM_SIGNATURE);
         strncpy(this->APIToken, APIToken, sizeof(this->APIToken));
         strncpy(this->APICandleID, APICandleID, sizeof(this->APICandleID));
-        strncpy(this->SSID, WiFiSSID, sizeof(this->SSID));
-        strncpy(this->WiFiPassword, WiFiPassword, sizeof(this->WiFiPassword));
         this->signature = EEPROM_SIGNATURE;
 
-        auto written = EEPROM.writeBytes(0, this, sizeof(*this));
-        debug.printf("%d bytes written to EEPROM\n", written);
-    } else {
+        // auto written = EEPROM.writeBytes(0, this, sizeof(*this));
+        // debug.printf("%d bytes written to EEPROM\n", written);
+    }
+    else
+    {
         debug.println("\nReusing Stored Config");
-        loaded = true;
+
+        storedConfig = *this;
+    }
+}
+
+void SavedConfig::Save(IDebugStream &debug)
+{
+    if (0 == memcmp(this, &storedConfig, sizeof(*this)))
+    {
+        debug.println("Config unchanged - not writing to EEPROM");
+        return;
     }
 
-    EEPROM.end();
+    auto written = EEPROM.writeBytes(0, this, sizeof(*this));
+    debug.printf("%d bytes written to EEPROM\n", written);
 
-    return loaded;
+    bool ok = EEPROM.commit();
+    if (!ok)
+    {
+        debug.println("Error committing to EEPROM");
+    }
+    else
+    {
+        storedConfig = *this;
+    }
 }

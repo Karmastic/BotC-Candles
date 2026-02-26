@@ -7,8 +7,8 @@ const char *WiFiConnectTask::TaskName = "WiFiConnectTask";
 
 const uint64_t WiFiConnectTimeoutMS = 15 * 1000 * 1000; // 15 seconds
 
-WiFiConnectTask::WiFiConnectTask(IDebugStream *debugOutput, SavedConfig &config, bool configLoaded, std::function<void(void)> cb, std::function<void(void)> failCB)
-    : Task(debugOutput), config(config), configLoaded(configLoaded)
+WiFiConnectTask::WiFiConnectTask(IDebugStream *debugOutput, SavedConfig &config, std::function<void(void)> cb, std::function<void(void)> failCB)
+    : Task(debugOutput), config(config)
 {
     this->debugOutput->printf("wfst: config.signature: %u\n", this->config.signature);
     this->connectedCallback = cb;
@@ -23,12 +23,6 @@ const char *WiFiConnectTask::Name()
 
 void WiFiConnectTask::setup()
 {
-    // if (this->configLoaded) {
-    //     this->debugOutput->printf("Connecting to WiFi network: %s\n", this->config.SSID);
-    //     WiFi.begin(this->config.SSID, this->config.WiFiPassword);
-    // } else {
-    //     this->debugOutput->println("No WiFi config found.  Not connecting to WiFi.");
-    // }
     this->debugOutput->printf("\nConnecting to WiFi network: %s\n\n", config.SSID);
 
     this->timeoutTime = esp_timer_get_time() + WiFiConnectTimeoutMS;

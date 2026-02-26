@@ -5,7 +5,7 @@
 
 class WiFiConnectTask : public Task {
 public:    
-    WiFiConnectTask(IDebugStream *debugOutput, SavedConfig& config, bool configLoaded, std::function<void(void)> connectedCallback, std::function<void(void)> failedCallback);
+    WiFiConnectTask(IDebugStream *debugOutput, SavedConfig& config, std::function<void(void)> connectedCallback, std::function<void(void)> failedCallback);
 
     static const char *TaskName;
 
@@ -15,7 +15,6 @@ public:
 
 private:
     SavedConfig& config;
-    bool configLoaded;
     uint64_t timeoutTime;
     std::function<void(void)>  connectedCallback;
     std::function<void(void)>  failedCallback;

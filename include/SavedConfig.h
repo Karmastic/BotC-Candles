@@ -6,7 +6,8 @@
 
 #pragma pack(push, 2)
 struct SavedConfig {
-    bool LoadConfig(IDebugStream& debugOutput);
+    void Load(IDebugStream& debugOutput);
+    void Save(IDebugStream& debugOutput);
 
     static const char *RootCandleURL;
     static const char *Host;
