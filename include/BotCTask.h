@@ -1,6 +1,7 @@
 #pragma once
 
 #include <WebSocketsClient.h>
+#include <WebServer.h>
 
 #include "ITask.h"
 #include "IDebugStream.h"
@@ -8,7 +9,7 @@
 #include "SavedConfig.h"
 #include "WSClient.h"
 
-class BotCTask : public ITask, private WSClient {
+class BotCTask : public ITask, private WSClient, private WebServer {
 public:    
     BotCTask(IDebugStream *debugOutput, SavedConfig& config);
 
@@ -25,7 +26,12 @@ public:
 
     // WSClient overrides
     virtual void handlePayload(uint8_t * payload, size_t length);
-   
+
+    // WebServer implementation
+    void handleNotFound();
+    void handleUpdate();
+    void handleClear();
+
     void setup();
     bool loop();
 

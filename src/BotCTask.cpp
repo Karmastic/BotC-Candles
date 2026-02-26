@@ -4,6 +4,7 @@
 
 const char *BotCTask::TaskName = "BotCTask";
 const char *STATUS_MESSAGE = "candle_status_update";
+const char *REQUEST_STATUS_MESSAGE = "{\"event\":\"request_candle_status_update\"}";
 
 const uint8_t pins[] = { 13 };
 
@@ -16,7 +17,8 @@ static const char *urlFromConfig(SavedConfig& config) {
 
 BotCTask::BotCTask(IDebugStream *debugOutput, SavedConfig& config)
         : WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000),
-        candleOperator(1, 4, pins, 1, 0.05, 50) {
+        candleOperator(1, 4, pins, 1, 0.05, 50),
+        WebServer(80) {
     this->debugOutput = debugOutput;
     this->config = config;
 }
@@ -28,10 +30,19 @@ const char *BotCTask::Name() {
 void BotCTask::setup() {
     // Connect to WebSocket server
     this->connect();
+
+    WebServer::onNotFound(std::bind(&BotCTask::handleNotFound, this));
+    WebServer::on("/u", std::bind(&BotCTask::handleUpdate, this));
+    WebServer::on("/c", std::bind(&BotCTask::handleClear, this));
+
+    WebServer::begin();
+
+    this->debugOutput->println("HTTP server started");
 }
 
 bool BotCTask::loop() {
     WSClient::doLoop();
+    WebServer::handleClient();
     this->candleOperator.Animate();
 
     // This task never ends so we'll always return false.
@@ -60,4 +71,18 @@ void BotCTask::handlePayload(uint8_t *payload, size_t length) {
     this->debugOutput->printf("Payload: %d Candles\n", data.size());
 
     this->candleOperator.SetCandleStates(data);
+}
+
+void BotCTask::handleNotFound() {
+  this->send(404, "text/plain", "Not found");
+}
+
+void BotCTask::handleUpdate() {
+    this->SendText(REQUEST_STATUS_MESSAGE);
+    this->send(200, "text/html", "Request sent");
+}
+
+void BotCTask::handleClear() {
+    this->Clear();
+    this->send(200, "text/html", "OK");
 }
