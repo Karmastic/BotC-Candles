@@ -10,7 +10,6 @@ const uint64_t WiFiConnectTimeoutMS = 15 * 1000 * 1000; // 15 seconds
 WiFiConnectTask::WiFiConnectTask(IDebugStream *debugOutput, SavedConfig &config, std::function<void(void)> cb, std::function<void(void)> failCB)
     : Task(debugOutput), config(config)
 {
-    this->debugOutput->printf("wfst: config.signature: %u\n", this->config.signature);
     this->connectedCallback = cb;
     this->failedCallback = failCB;
     this->timeoutTime = 0;
@@ -40,7 +39,6 @@ void WiFiConnectTask::loop()
         this->debugOutput->println(WiFi.localIP());
 
         this->connectedCallback();
-        this->debugOutput->println("Callback complete");
     }
     else
     {

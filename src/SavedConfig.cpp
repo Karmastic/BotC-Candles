@@ -24,9 +24,6 @@ void SavedConfig::Load(IDebugStream &debug)
         strncpy(this->APIToken, Config::APIToken, sizeof(this->APIToken));
         strncpy(this->APICandleID, Config::APICandleID, sizeof(this->APICandleID));
         this->signature = EEPROM_SIGNATURE;
-
-        // auto written = EEPROM.writeBytes(0, this, sizeof(*this));
-        // debug.printf("%d bytes written to EEPROM\n", written);
     }
     else
     {

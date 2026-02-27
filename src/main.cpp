@@ -14,6 +14,8 @@
 #define LED_PIN 2
 #define LED_BLINK_INTERVAL_MS (500 * 1000)
 
+#define RESET_NETWORK_PIN 14
+
 static SavedConfig config;
 
 void setup()
@@ -23,8 +25,16 @@ void setup()
     Serial.println();
     Serial.println();
 
+    pinMode(RESET_NETWORK_PIN, INPUT);
+
+    bool resetNetwork = digitalRead(RESET_NETWORK_PIN) == LOW;
+    if (resetNetwork)
+    {
+        Serial.println("Reset network button pressed.  Forcing SelectNetwork Task.");
+    }
+
     IDebugStream *pDebug = new SerialDebugStream(Serial);
-    IDebugStream& debug = *pDebug;
+    IDebugStream &debug = *pDebug;
     config.Load(debug);
 
     AppTasks *appTasks = new AppTasks(&debug);
@@ -66,7 +76,7 @@ void setup()
     ITask *selectTask = new SelectNetworkTask(&debug, selectedCB);
     appTasks->AddTask(selectTask);
 
-    if (config.SSID[0] == '\0')
+    if (config.SSID[0] == '\0' || resetNetwork)
     {
         appTasks->ActivateTask(SelectNetworkTask::TaskName);
     }
