@@ -21,7 +21,7 @@ jobs:
         run: pip install --upgrade platformio
 
       - name: Generate Configuration File
-        run: echo ${{ secrets.CONFIG }} > include/config.h
+        run: echo '${{ secrets.CONFIG }}' > include/config.h
 
       - name: Build PlatformIO Project
         run: pio run
