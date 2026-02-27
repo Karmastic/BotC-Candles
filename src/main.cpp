@@ -37,10 +37,10 @@ void setup()
     IDebugStream &debug = *pDebug;
     config.Load(debug);
 
-    AppTasks *appTasks = new AppTasks(&debug);
-    ITask *botCTask = new BotCTask(&debug, config);
+    AppTasks *appTasks = new AppTasks(pDebug);
+    ITask *botCTask = new BotCTask(pDebug, config);
     appTasks->AddTask(botCTask);
-    ITask *activityLEDTask = new ActivityLEDTask(&debug, LED_PIN, LED_BLINK_INTERVAL_MS);
+    ITask *activityLEDTask = new ActivityLEDTask(pDebug, LED_PIN, LED_BLINK_INTERVAL_MS);
     appTasks->AddTask(activityLEDTask);
     appTasks->ActivateTask(ActivityLEDTask::TaskName);
 
@@ -59,7 +59,7 @@ void setup()
         appTasks->DeactivateTask(WiFiConnectTask::TaskName);
         appTasks->ActivateTask(SelectNetworkTask::TaskName);
     };
-    ITask *wifiTask = new WiFiConnectTask(&debug, config, wifiCB, failCB);
+    ITask *wifiTask = new WiFiConnectTask(pDebug, config, wifiCB, failCB);
     appTasks->AddTask(wifiTask);
 
     std::function<void(const char *ssid, const char *pwd)> selectedCB = [appTasks](const char *ssid, const char *pwd) -> void
@@ -73,7 +73,7 @@ void setup()
         appTasks->DeactivateTask(SelectNetworkTask::TaskName);
         appTasks->ActivateTask(WiFiConnectTask::TaskName);
     };
-    ITask *selectTask = new SelectNetworkTask(&debug, selectedCB);
+    ITask *selectTask = new SelectNetworkTask(pDebug, selectedCB);
     appTasks->AddTask(selectTask);
 
     if (config.SSID[0] == '\0' || resetNetwork)
