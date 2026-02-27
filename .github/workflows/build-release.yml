@@ -1,0 +1,76 @@
+name: Build Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Select the type of release'
+        required: true
+        default: 'Patch'
+        type: choice
+        options:
+          - 'Patch'
+          - 'Minor'
+          - 'Major'
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Generate Configuration File
+        run: echo '${{ secrets.CONFIG }}' > include/config.h
+
+      - name: Bump Release Version
+        run: |
+          bash ./scripts/bump-version.sh ${{ github.event.inputs.release_type }}
+          echo NEW_VERSION=$(cat version.txt) >> $GITHUB_ENV
+
+      - name: Build PlatformIO Project
+        run: pio run
+
+      - name: Set Git User Identity
+        run: |
+          git config --local user.email github@karmastics.com
+          git config --local user.name CI Bot
+
+      - name: Generate and push git tag
+        run: |
+          git add version.txt
+          git commit -m "Generated new ${{ github.event.inputs.release_type }} image - ${{env.NEW_VERSION}}"
+          git tag ${{env.NEW_VERSION}}
+          git push
+          git push origin tag ${{env.NEW_VERSION}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Publish Release
+        uses: "softprops/action-gh-release@v2"
+        with:
+          draft: false
+          generate_release_notes: true
+          prerelease: false
+          tag_name: "${{ env.NEW_VERSION }}"
+          files: |
+            .pio/build/esp32doit-devkit-v1/firmware.bin
