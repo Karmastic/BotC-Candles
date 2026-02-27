@@ -1,6 +1,6 @@
-name: PlatformIO CI
+name: Build PR
 
-on: [push]
+on: [pull_request]
 
 jobs:
   build:
@@ -19,6 +19,9 @@ jobs:
           python-version: '3.11'
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
+
+      - name: Generate Configuration File
+        run: echo ${{ secrets.CONFIG }} > include/config.h
 
       - name: Build PlatformIO Project
         run: pio run
