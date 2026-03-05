@@ -49,6 +49,7 @@ jobs:
         run: |
           bash ./scripts/bump-version.sh ${{ github.event.inputs.release_type }}
           echo NEW_VERSION=$(cat version.txt) >> $GITHUB_ENV
+          echo "#define APP_VERSION \"$(cat version.txt)\"" > include/version.h
 
       - name: Build PlatformIO Project
         run: pio run

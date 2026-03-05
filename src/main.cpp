@@ -9,6 +9,7 @@
 #include "SerialDebugStream.h"
 #include "SavedConfig.h"
 #include "SelectNetworkTask.h"
+#include "version.h"
 #include "WiFiConnectTask.h"
 
 #define LED_PIN 2
@@ -24,6 +25,8 @@ void setup()
     Serial.setDebugOutput(true);
     Serial.println();
     Serial.println();
+
+    Serial.printf("Starting BotC-Candles [v%s]...\n", APP_VERSION);
 
     pinMode(RESET_NETWORK_PIN, INPUT);
 
