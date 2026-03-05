@@ -61,7 +61,7 @@ jobs:
 
       - name: Generate and push git tag
         run: |
-          git add version.txt
+          git add version.txt include/version.h
           git commit -m "Generated new ${{ github.event.inputs.release_type }} image - ${{env.NEW_VERSION}}"
           git tag ${{env.NEW_VERSION}}
           git push
