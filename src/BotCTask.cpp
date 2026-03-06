@@ -1,6 +1,8 @@
 #include <ArduinoJson.h>
 
+#include "AppTasks.h"
 #include "BotCTask.h"
+#include "InstallUpdateTask.h"
 
 const char *BotCTask::TaskName = "BotCTask";
 const char *STATUS_MESSAGE = "candle_status_update";
@@ -37,6 +39,9 @@ void BotCTask::setup() {
     });
     AsyncWebServer::on(AsyncURIMatcher::exact("/c"), HTTP_GET, [this](AsyncWebServerRequest *request) {
         this->handleClear(request);
+    });
+    AsyncWebServer::on(AsyncURIMatcher::exact("/i"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        this->handleInstallUpdate(request);
     });
 
     AsyncWebServer::begin();
@@ -84,5 +89,21 @@ void BotCTask::handleUpdate(AsyncWebServerRequest *request) {
 
 void BotCTask::handleClear(AsyncWebServerRequest *request) {
     this->Clear();
+    request->send(200, "text/html", "OK");
+}
+
+void BotCTask::handleInstallUpdate(AsyncWebServerRequest *request) {
+    std::function<void(void)> successCB = [](void) -> void
+    {
+    };
+    std::function<void(void)> failCB = [](void) -> void
+    {
+        AppTasks::Instance()->RemoveTask(InstallUpdateTask::TaskName);
+    };
+
+    InstallUpdateTask *updateTask = new InstallUpdateTask(this->debugOutput, successCB, failCB);
+    AppTasks::Instance()->AddTask(updateTask);
+    AppTasks::Instance()->ActivateTask(InstallUpdateTask::TaskName);
+
     request->send(200, "text/html", "OK");
 }
