@@ -4,8 +4,8 @@
 const char *InstallUpdateTask::TaskName = "InstallUpdateTask";
 #define LED_PIN 2
 
-InstallUpdateTask::InstallUpdateTask(IDebugStream *debugOutput, std::function<void(void)> cbSuccess, std::function<void(void)> cbFailure)
-    : Task(debugOutput), cbSuccess(cbSuccess), cbFailure(cbFailure)
+InstallUpdateTask::InstallUpdateTask(IDebugStream *debugOutput, String tag, std::function<void(void)> cbSuccess, std::function<void(void)> cbFailure)
+    : Task(debugOutput), tag(tag), cbSuccess(cbSuccess), cbFailure(cbFailure)
 {
 }
 
@@ -30,7 +30,9 @@ void InstallUpdateTask::loop()
         http->setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
     };
     this->myUpdater.setLedPin(LED_PIN, LOW);
-    auto result = this->myUpdater.update(this->client, "https://api.github.com/repos/Karmastic/BotC-Candles/releases/assets/367856343", "", requestCB);
+    char url[256];
+    snprintf(url, sizeof(url), "https://github.com/Karmastic/BotC-Candles/releases/download/%s/firmware.bin", this->tag.c_str());
+    auto result = this->myUpdater.update(this->client, url, "", requestCB);
     if (result == HTTP_UPDATE_OK)
     {
         this->cbSuccess();

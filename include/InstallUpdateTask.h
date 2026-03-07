@@ -7,7 +7,7 @@
 class InstallUpdateTask : public Task
 {
 public:
-    InstallUpdateTask(IDebugStream *debugOutput, std::function<void(void)> cbSuccess, std::function<void(void)> cbFailure);
+    InstallUpdateTask(IDebugStream *debugOutput, String tag, std::function<void(void)> cbSuccess, std::function<void(void)> cbFailure);
     static const char *TaskName;
 
     virtual const char *Name();
@@ -17,6 +17,7 @@ public:
 private:
     WiFiClientSecure client;
     UpdateOTA_M myUpdater;
+    String tag;
     std::function<void(void)> cbSuccess;
     std::function<void(void)> cbFailure;
 };

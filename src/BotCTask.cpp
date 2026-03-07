@@ -43,7 +43,8 @@ void BotCTask::setup() {
         this->handleClear(request);
     });
     AsyncWebServer::on(AsyncURIMatcher::exact("/i"), HTTP_GET, [this](AsyncWebServerRequest *request) {
-        this->handleInstallUpdate(request);
+        const char *tag = request->getParam("tag", false)->value().c_str();
+        this->handleInstallUpdate(request, tag);
     });
 
     AsyncWebServer::begin();
@@ -94,7 +95,7 @@ void BotCTask::handleClear(AsyncWebServerRequest *request) {
     request->send(200, "text/html", "OK");
 }
 
-void BotCTask::handleInstallUpdate(AsyncWebServerRequest *request) {
+void BotCTask::handleInstallUpdate(AsyncWebServerRequest *request, String tag) {
     std::function<void(void)> successCB = [](void) -> void
     {
     };
@@ -103,7 +104,7 @@ void BotCTask::handleInstallUpdate(AsyncWebServerRequest *request) {
         AppTasks::Instance()->RemoveTask(InstallUpdateTask::TaskName);
     };
 
-    InstallUpdateTask *updateTask = new InstallUpdateTask(this->debugOutput, successCB, failCB);
+    InstallUpdateTask *updateTask = new InstallUpdateTask(this->debugOutput, tag, successCB, failCB);
     AppTasks::Instance()->AddTask(updateTask);
     AppTasks::Instance()->ActivateTask(InstallUpdateTask::TaskName);
 

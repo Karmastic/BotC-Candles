@@ -30,7 +30,7 @@ public:
     void handleNotFound(AsyncWebServerRequest *request);
     void handleUpdate(AsyncWebServerRequest *request);
     void handleClear(AsyncWebServerRequest *request);
-    void handleInstallUpdate(AsyncWebServerRequest *request);
+    void handleInstallUpdate(AsyncWebServerRequest *request, String tag);
 
     void setup();
     void loop();
