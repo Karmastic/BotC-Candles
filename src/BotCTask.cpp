@@ -2,75 +2,101 @@
 
 #include "AppTasks.h"
 #include "BotCTask.h"
+#include "GithubHelper.h"
 #include "InstallUpdateTask.h"
+#include "version.h"
 
 const char *BotCTask::TaskName = "BotCTask";
 const char *STATUS_MESSAGE = "candle_status_update";
 const char *REQUEST_STATUS_MESSAGE = "{\"event\":\"request_candle_status_update\"}";
 
-const uint8_t pins[] = { 13, 12 };
+const uint8_t pins[] = {13, 12};
 
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
 
-static const char *urlFromConfig(SavedConfig& config) {
+static const char *urlFromConfig(SavedConfig &config)
+{
     char url[256];
     snprintf(url, sizeof(url), "%s%s?token=%s", SavedConfig::RootCandleURL, config.APICandleID, config.APIToken);
 
     return strdup(url);
-} 
+}
 
-BotCTask::BotCTask(IDebugStream *debugOutput, SavedConfig& config)
-        : Task(debugOutput)
-        , WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000)
-        , candleOperator(2, 6, pins, countof(pins), 0.05, 50)
-        , AsyncWebServer(80) {
+BotCTask::BotCTask(IDebugStream *debugOutput, SavedConfig &config)
+    : Task(debugOutput), WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000), candleOperator(2, 6, pins, countof(pins), 0.05, 50), AsyncWebServer(80)
+{
     this->config = config;
 }
 
-const char *BotCTask::Name() {
+const char *BotCTask::Name()
+{
     return BotCTask::TaskName;
 }
 
-void BotCTask::setup() {
+void BotCTask::setup()
+{
     // Connect to WebSocket server
     this->connect();
 
     AsyncWebServer::onNotFound(std::bind(&BotCTask::handleNotFound, this, std::placeholders::_1));
-    AsyncWebServer::on(AsyncURIMatcher::exact("/u"), HTTP_GET, [this](AsyncWebServerRequest *request) {
-        this->handleUpdate(request);
-    });
-    AsyncWebServer::on(AsyncURIMatcher::exact("/c"), HTTP_GET, [this](AsyncWebServerRequest *request) {
-        this->handleClear(request);
-    });
-    AsyncWebServer::on(AsyncURIMatcher::exact("/i"), HTTP_GET, [this](AsyncWebServerRequest *request) {
-        const char *tag = request->getParam("tag", false)->value().c_str();
-        this->handleInstallUpdate(request, tag);
-    });
+    AsyncWebServer::on(AsyncURIMatcher::exact("/u"), HTTP_GET, [this](AsyncWebServerRequest *request)
+                       { this->handleUpdate(request); });
+    AsyncWebServer::on(AsyncURIMatcher::exact("/c"), HTTP_GET, [this](AsyncWebServerRequest *request)
+                       { this->handleClear(request); });
+    AsyncWebServer::on(AsyncURIMatcher::exact("/i"), HTTP_GET, [this](AsyncWebServerRequest *request)
+                       {
+        String tag;
+        if (request->hasParam("tag", false))
+        {
+            tag = request->getParam("tag", false)->value();
+        }
+        else
+        {
+            if (!GithubHelper::getLatestReleaseTag(this->debugOutput,"Karmastic", "BotC-Candles", tag))
+            {
+                this->debugOutput->println("Failed to get latest release tag");
+                request->send(500, "text/html", "Failed to get latest release tag");
+                return;
+            }
+        }
+
+        if (tag == APP_VERSION)
+        {
+            this->debugOutput->println("Already on latest version");
+            request->send(200, "text/html", "Already on latest version");
+            return;
+        }
+
+        this->handleInstallUpdate(request, tag); });
 
     AsyncWebServer::begin();
 
     this->debugOutput->println("HTTP server started");
 }
 
-void BotCTask::loop() {
+void BotCTask::loop()
+{
     WSClient::doLoop();
     this->candleOperator.Animate();
 }
 
-void BotCTask::handlePayload(uint8_t *payload, size_t length) {
+void BotCTask::handlePayload(uint8_t *payload, size_t length)
+{
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, payload, length);
-    if (error) {
+    if (error)
+    {
         this->debugOutput->print("deserializeJson() failed: ");
         this->debugOutput->println(error.c_str());
         return;
     }
 
-    const char* event = doc["event"];
+    const char *event = doc["event"];
     this->debugOutput->print("Event: ");
     this->debugOutput->println(event);
 
-    if (0 != strcmp(event, STATUS_MESSAGE)) {
+    if (0 != strcmp(event, STATUS_MESSAGE))
+    {
         this->debugOutput->println("Unknown event");
         return;
     }
@@ -81,24 +107,31 @@ void BotCTask::handlePayload(uint8_t *payload, size_t length) {
     this->candleOperator.SetCandleStates(data);
 }
 
-void BotCTask::handleNotFound(AsyncWebServerRequest *request) {
-  request->send(404, "text/plain", "Not found");
+void BotCTask::handleNotFound(AsyncWebServerRequest *request)
+{
+    request->send(404, "text/plain", "Not found");
 }
 
-void BotCTask::handleUpdate(AsyncWebServerRequest *request) {
+void BotCTask::handleUpdate(AsyncWebServerRequest *request)
+{
     this->SendText(REQUEST_STATUS_MESSAGE);
     request->send(200, "text/html", "Request sent");
 }
 
-void BotCTask::handleClear(AsyncWebServerRequest *request) {
+void BotCTask::handleClear(AsyncWebServerRequest *request)
+{
     this->Clear();
     request->send(200, "text/html", "OK");
 }
 
-void BotCTask::handleInstallUpdate(AsyncWebServerRequest *request, String tag) {
-    std::function<void(void)> successCB = [](void) -> void
-    {
-    };
+void BotCTask::handleInstallUpdate(AsyncWebServerRequest *request, String tag)
+{
+    // Get JSON for latest release / tag
+    // https://api.github.com/repos/Karmastic/BotC-Candles/releases/latest
+    // Latest Tag is ".tag_name" (string eg "0.3.0")
+    // Parse that string and compare against current version.
+
+    std::function<void(void)> successCB = [](void) -> void {};
     std::function<void(void)> failCB = [](void) -> void
     {
         AppTasks::Instance()->RemoveTask(InstallUpdateTask::TaskName);
