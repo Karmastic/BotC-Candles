@@ -8,7 +8,9 @@ const char *BotCTask::TaskName = "BotCTask";
 const char *STATUS_MESSAGE = "candle_status_update";
 const char *REQUEST_STATUS_MESSAGE = "{\"event\":\"request_candle_status_update\"}";
 
-const uint8_t pins[] = { 13 };
+const uint8_t pins[] = { 13, 12 };
+
+#define countof(x) (sizeof(x) / sizeof((x)[0]))
 
 static const char *urlFromConfig(SavedConfig& config) {
     char url[256];
@@ -20,7 +22,7 @@ static const char *urlFromConfig(SavedConfig& config) {
 BotCTask::BotCTask(IDebugStream *debugOutput, SavedConfig& config)
         : Task(debugOutput)
         , WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000)
-        , candleOperator(1, 4, pins, 1, 0.05, 50)
+        , candleOperator(2, 6, pins, countof(pins), 0.05, 50)
         , AsyncWebServer(80) {
     this->config = config;
 }
