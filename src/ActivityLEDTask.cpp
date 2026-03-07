@@ -7,6 +7,12 @@ const char *ActivityLEDTask::TaskName = "ActivityLEDTask";
 ActivityLEDTask::ActivityLEDTask(IDebugStream *debugOutput, uint8_t pin, uint32_t blinkIntervalMs)
     : Task(debugOutput), pin(pin), blinkIntervalMs(blinkIntervalMs), nextLEDBlinkTime(0)
 {
+    baseBlinkIntervalMs = blinkIntervalMs;
+}
+
+void ActivityLEDTask::SetMultiplier(float multiplier)
+{
+    this->blinkIntervalMs = (uint32_t)(this->baseBlinkIntervalMs * multiplier);
 }
 
 const char *ActivityLEDTask::Name()

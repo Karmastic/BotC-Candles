@@ -68,33 +68,38 @@ void CandleOperator::SetCandleStates(JsonArray candleStates)
 
 void CandleOperator::SetCandleState(uint8_t candleIndex, uint32_t color, bool flickering)
 {
+    if (candleIndex >= this->maxCandles)
+    {
+        return;
+    }
+
     uint8_t pin = candleIndex % this->pinCount;
     uint8_t ledStartIndex = (candleIndex / this->pinCount) * this->ledsPerCandle;
 
+    this->flickering[candleIndex] = flickering;
+    this->colors[candleIndex] = color;
+
+    uint8_t r = (color >> 16) & 0xFF;
+    uint8_t g = (color >> 8) & 0xFF;
+    uint8_t b = color & 0xFF;
+
+    if (flickering)
+    {
+        r = (r * this->animationPercent) / 100;
+        g = (g * this->animationPercent) / 100;
+        b = (b * this->animationPercent) / 100;
+    }
+    else
+    {
+        r = (r * this->maxBrightness) / 100;
+        g = (g * this->maxBrightness) / 100;
+        b = (b * this->maxBrightness) / 100;
+    }
+
+    color = (r << 16) | (g << 8) | b;
+
     for (uint8_t i = ledStartIndex; i < ledStartIndex + this->ledsPerCandle; i++)
     {
-        this->flickering[i] = flickering;
-        this->colors[i] = color;
-
-        uint8_t r = (color >> 16) & 0xFF;
-        uint8_t g = (color >> 8) & 0xFF;
-        uint8_t b = color & 0xFF;
-
-        if (flickering)
-        {
-            r = (r * this->animationPercent) / 100;
-            g = (g * this->animationPercent) / 100;
-            b = (b * this->animationPercent) / 100;
-        }
-        else
-        {
-            r = (r * this->maxBrightness) / 100;
-            g = (g * this->maxBrightness) / 100;
-            b = (b * this->maxBrightness) / 100;
-        }
-
-        color = (r << 16) | (g << 8) | b;
-
         this->pixels[pin]->setPixelColor(i, color);
     }
 }

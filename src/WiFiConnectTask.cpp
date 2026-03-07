@@ -5,7 +5,7 @@
 
 const char *WiFiConnectTask::TaskName = "WiFiConnectTask";
 
-const uint64_t WiFiConnectTimeoutMS = 15 * 1000 * 1000; // 15 seconds
+const uint64_t WiFiConnectTimeoutMS = 25 * 1000 * 1000; // 15 seconds
 
 WiFiConnectTask::WiFiConnectTask(IDebugStream *debugOutput, SavedConfig &config, std::function<void(void)> cb, std::function<void(void)> failCB)
     : Task(debugOutput), config(config)

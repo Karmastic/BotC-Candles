@@ -1,12 +1,16 @@
 #include <ArduinoJson.h>
 
+#include "AppTasks.h"
 #include "BotCTask.h"
+#include "InstallUpdateTask.h"
 
 const char *BotCTask::TaskName = "BotCTask";
 const char *STATUS_MESSAGE = "candle_status_update";
 const char *REQUEST_STATUS_MESSAGE = "{\"event\":\"request_candle_status_update\"}";
 
-const uint8_t pins[] = { 13 };
+const uint8_t pins[] = { 13, 12 };
+
+#define countof(x) (sizeof(x) / sizeof((x)[0]))
 
 static const char *urlFromConfig(SavedConfig& config) {
     char url[256];
@@ -18,7 +22,7 @@ static const char *urlFromConfig(SavedConfig& config) {
 BotCTask::BotCTask(IDebugStream *debugOutput, SavedConfig& config)
         : Task(debugOutput)
         , WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000)
-        , candleOperator(1, 4, pins, 1, 0.05, 50)
+        , candleOperator(2, 6, pins, countof(pins), 0.05, 50)
         , AsyncWebServer(80) {
     this->config = config;
 }
@@ -37,6 +41,9 @@ void BotCTask::setup() {
     });
     AsyncWebServer::on(AsyncURIMatcher::exact("/c"), HTTP_GET, [this](AsyncWebServerRequest *request) {
         this->handleClear(request);
+    });
+    AsyncWebServer::on(AsyncURIMatcher::exact("/i"), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        this->handleInstallUpdate(request);
     });
 
     AsyncWebServer::begin();
@@ -84,5 +91,21 @@ void BotCTask::handleUpdate(AsyncWebServerRequest *request) {
 
 void BotCTask::handleClear(AsyncWebServerRequest *request) {
     this->Clear();
+    request->send(200, "text/html", "OK");
+}
+
+void BotCTask::handleInstallUpdate(AsyncWebServerRequest *request) {
+    std::function<void(void)> successCB = [](void) -> void
+    {
+    };
+    std::function<void(void)> failCB = [](void) -> void
+    {
+        AppTasks::Instance()->RemoveTask(InstallUpdateTask::TaskName);
+    };
+
+    InstallUpdateTask *updateTask = new InstallUpdateTask(this->debugOutput, successCB, failCB);
+    AppTasks::Instance()->AddTask(updateTask);
+    AppTasks::Instance()->ActivateTask(InstallUpdateTask::TaskName);
+
     request->send(200, "text/html", "OK");
 }
