@@ -72,6 +72,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Stage Release Assets
+        run: |
+          cp .pio/build/ESP32-DevKit/firmware.bin .pio/build/ESP32-DevKit/ESP32-DevKit-firmware.bin
+          cp .pio/build/ESP32-LCD-TS/firmware.bin .pio/build/ESP32-LCD-TS/ESP32-LCD-TS-firmware.bin
+
       - name: Publish Release
         uses: "softprops/action-gh-release@v2"
         with:
@@ -80,5 +85,5 @@ jobs:
           prerelease: false
           tag_name: "${{ env.NEW_VERSION }}"
           files: |
-            .pio/build/ESP32-DevKit/firmware.bin:ESP32-DevKit-firmware.bin
-            .pio/build/ESP32-LCD-TS/firmware.bin:ESP32-LCD-TS-firmware.bin
+            .pio/build/ESP32-DevKit/ESP32-DevKit-firmware.bin
+            .pio/build/ESP32-LCD-TS/ESP32-LCD-TS-firmware.bin
