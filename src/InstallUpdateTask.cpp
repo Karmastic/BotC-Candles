@@ -1,5 +1,8 @@
-#include "InstallUpdateTask.h"
 #include <Logger_M.hpp>
+
+#include "GithubHelper.h"
+#include "InstallUpdateTask.h"
+#include "version.h"
 
 const char *InstallUpdateTask::TaskName = "InstallUpdateTask";
 #define LED_PIN 2
@@ -24,28 +27,46 @@ void InstallUpdateTask::setup()
 
 void InstallUpdateTask::loop()
 {
-    std::function<void(HTTPClient *)> requestCB = [this](HTTPClient *http) {
-        Logger_M::printlnV("InstallUpdateTask", "Inside request callback");
-        http->addHeader("Accept", "application/octet-stream");
-        http->setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
-    };
-    this->myUpdater.setLedPin(LED_PIN, LOW);
-    char url[256];
-    snprintf(url, sizeof(url), "https://github.com/Karmastic/BotC-Candles/releases/download/%s/firmware.bin", this->tag.c_str());
-    auto result = this->myUpdater.update(this->client, url, "", requestCB);
-    if (result == HTTP_UPDATE_OK)
+    if (this->tag.length() == 0) // Tag not provided?  Look for latest release
     {
-        this->cbSuccess();
-        ESP.restart();
+        if (!GithubHelper::getLatestReleaseTag(this->debugOutput, "Karmastic", "BotC-Candles", tag))
+        {
+            this->debugOutput->println("Failed to get latest release tag");
+            return;
+        }
     }
-    else if (result == HTTP_UPDATE_NO_UPDATES)
+
+    if (tag == APP_VERSION)
     {
-        this->debugOutput->println("No updates available");
-        this->cbSuccess();
+        this->debugOutput->println("Already on latest version");
     }
     else
     {
-        this->debugOutput->printf("Update failed: %s\n", this->myUpdater.getLastErrorString().c_str());
-        this->cbFailure();
+        std::function<void(HTTPClient *)> requestCB = [this](HTTPClient *http)
+        {
+            Logger_M::printlnV("InstallUpdateTask", "Inside request callback");
+            http->addHeader("Accept", "application/octet-stream");
+            http->setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
+        };
+        this->myUpdater.setLedPin(LED_PIN, LOW);
+        char url[256];
+        snprintf(url, sizeof(url), "https://github.com/Karmastic/BotC-Candles/releases/download/%s/firmware.bin", this->tag.c_str());
+        auto result = this->myUpdater.update(this->client, url, "", requestCB);
+        if (result == HTTP_UPDATE_OK)
+        {
+            ESP.restart();
+        }
+        else if (result == HTTP_UPDATE_NO_UPDATES)
+        {
+            this->debugOutput->println("No updates available");
+        }
+        else
+        {
+            this->debugOutput->printf("Update failed: %s\n", this->myUpdater.getLastErrorString().c_str());
+            this->cbFailure();
+            return;
+        }
     }
+
+    this->cbSuccess();
 }

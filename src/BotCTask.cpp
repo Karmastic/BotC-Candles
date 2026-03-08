@@ -2,9 +2,7 @@
 
 #include "AppTasks.h"
 #include "BotCTask.h"
-#include "GithubHelper.h"
 #include "InstallUpdateTask.h"
-#include "version.h"
 
 const char *BotCTask::TaskName = "BotCTask";
 const char *STATUS_MESSAGE = "candle_status_update";
@@ -50,23 +48,6 @@ void BotCTask::setup()
         {
             tag = request->getParam("tag", false)->value();
         }
-        else
-        {
-            if (!GithubHelper::getLatestReleaseTag(this->debugOutput,"Karmastic", "BotC-Candles", tag))
-            {
-                this->debugOutput->println("Failed to get latest release tag");
-                request->send(500, "text/html", "Failed to get latest release tag");
-                return;
-            }
-        }
-
-        if (tag == APP_VERSION)
-        {
-            this->debugOutput->println("Already on latest version");
-            request->send(200, "text/html", "Already on latest version");
-            return;
-        }
-
         this->handleInstallUpdate(request, tag); });
 
     AsyncWebServer::begin();
@@ -131,7 +112,10 @@ void BotCTask::handleInstallUpdate(AsyncWebServerRequest *request, String tag)
     // Latest Tag is ".tag_name" (string eg "0.3.0")
     // Parse that string and compare against current version.
 
-    std::function<void(void)> successCB = [](void) -> void {};
+    std::function<void(void)> successCB = [](void) -> void
+    {
+        AppTasks::Instance()->RemoveTask(InstallUpdateTask::TaskName);
+    };
     std::function<void(void)> failCB = [](void) -> void
     {
         AppTasks::Instance()->RemoveTask(InstallUpdateTask::TaskName);
