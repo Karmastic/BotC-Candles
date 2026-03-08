@@ -50,7 +50,7 @@ void InstallUpdateTask::loop()
         };
         this->myUpdater.setLedPin(ACTIVITY_LED, LOW);
         char url[256];
-        snprintf(url, sizeof(url), "https://github.com/Karmastic/BotC-Candles/releases/download/%s/firmware.bin", this->tag.c_str());
+        snprintf(url, sizeof(url), "https://github.com/Karmastic/BotC-Candles/releases/download/%s/%s-firmware.bin", this->tag.c_str(), HAL_DEVICE_ID);
         auto result = this->myUpdater.update(this->client, url, "", requestCB);
         if (result == HTTP_UPDATE_OK)
         {
