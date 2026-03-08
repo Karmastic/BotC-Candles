@@ -19,7 +19,7 @@ static SavedConfig config;
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(SERIAL_DEBUG_BAUDRATE);
     Serial.setDebugOutput(true);
     Serial.println();
     Serial.println();
