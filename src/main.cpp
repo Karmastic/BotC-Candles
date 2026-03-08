@@ -6,31 +6,29 @@
 #include "ActivityLEDTask.h"
 #include "AppTasks.h"
 #include "BotCTask.h"
+#include "hal.h"
 #include "SerialDebugStream.h"
 #include "SavedConfig.h"
 #include "SelectNetworkTask.h"
 #include "version.h"
 #include "WiFiConnectTask.h"
 
-#define LED_PIN 2
 #define LED_BLINK_INTERVAL_MS (500 * 1000)
-
-#define RESET_NETWORK_PIN 14
 
 static SavedConfig config;
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(SERIAL_DEBUG_BAUDRATE);
     Serial.setDebugOutput(true);
     Serial.println();
     Serial.println();
 
     Serial.printf("Starting BotC-Candles [v%s]...\n", APP_VERSION);
 
-    pinMode(RESET_NETWORK_PIN, INPUT);
+    pinMode(RESET_CONFIG_INPUT, RESET_CONFIG_INPUT_MODE);
 
-    bool resetNetwork = digitalRead(RESET_NETWORK_PIN) == LOW;
+    bool resetNetwork = digitalRead(RESET_CONFIG_INPUT) == RESET_CONFIG_INPUT_STATE;
     if (resetNetwork)
     {
         Serial.println("Reset network button pressed.  Forcing SelectNetwork Task.");
@@ -43,7 +41,7 @@ void setup()
     AppTasks *appTasks = new AppTasks(pDebug);
     ITask *botCTask = new BotCTask(pDebug, config);
     appTasks->AddTask(botCTask);
-    ActivityLEDTask *activityLEDTask = new ActivityLEDTask(pDebug, LED_PIN, LED_BLINK_INTERVAL_MS);
+    ActivityLEDTask *activityLEDTask = new ActivityLEDTask(pDebug, ACTIVITY_LED, LED_BLINK_INTERVAL_MS);
     appTasks->AddTask(activityLEDTask);
     appTasks->ActivateTask(ActivityLEDTask::TaskName);
 

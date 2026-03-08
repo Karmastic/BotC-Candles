@@ -2,13 +2,14 @@
 
 #include "AppTasks.h"
 #include "BotCTask.h"
+#include "hal.h"
 #include "InstallUpdateTask.h"
 
 const char *BotCTask::TaskName = "BotCTask";
 const char *STATUS_MESSAGE = "candle_status_update";
 const char *REQUEST_STATUS_MESSAGE = "{\"event\":\"request_candle_status_update\"}";
 
-const uint8_t pins[] = {13, 12};
+const uint8_t pins[] = CANDLE_LED_PINS;
 
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
 

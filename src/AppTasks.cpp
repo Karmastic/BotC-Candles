@@ -83,10 +83,12 @@ void AppTasks::ActivateTask(const char *taskName)
             else if (task->GetState() == ITask::TaskState::Inactive)
             {
                 this->debugOutput->printf("[AppTasks] Activating Task %s\n", taskName);
-                task->SetState(ITask::TaskState::Active);
 
                 // Run setup for task immediately upon activation
+                // Run before changing state so we don't call its loop() method before setup().
                 task->setup();
+
+                task->SetState(ITask::TaskState::Active);
             }
 
             return;
