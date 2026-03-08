@@ -25,6 +25,7 @@ void WiFiConnectTask::setup()
     this->debugOutput->printf("\nConnecting to WiFi network: %s\n\n", config.SSID);
 
     this->timeoutTime = esp_timer_get_time() + WiFiConnectTimeoutMS;
+    this->debugOutput->printf("%lld / %lld\n", esp_timer_get_time(), this->timeoutTime);
 
     // NOTE: This is a blocking call - it does not return until it is connected or it encounters an error.
     WiFi.begin(config.SSID, config.WiFiPassword);
@@ -32,6 +33,8 @@ void WiFiConnectTask::setup()
 
 void WiFiConnectTask::loop()
 {
+    this->debugOutput->printf(" > %lld / %lld\n", esp_timer_get_time(), this->timeoutTime);
+
     if (WiFi.status() == WL_CONNECTED)
     {
         this->debugOutput->println("\nWiFi connected");

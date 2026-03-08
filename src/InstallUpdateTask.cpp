@@ -1,11 +1,11 @@
 #include <Logger_M.hpp>
 
 #include "GithubHelper.h"
+#include "hal.h"
 #include "InstallUpdateTask.h"
 #include "version.h"
 
 const char *InstallUpdateTask::TaskName = "InstallUpdateTask";
-#define LED_PIN 2
 
 InstallUpdateTask::InstallUpdateTask(IDebugStream *debugOutput, String tag, std::function<void(void)> cbSuccess, std::function<void(void)> cbFailure)
     : Task(debugOutput), tag(tag), cbSuccess(cbSuccess), cbFailure(cbFailure)
@@ -48,7 +48,7 @@ void InstallUpdateTask::loop()
             http->addHeader("Accept", "application/octet-stream");
             http->setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
         };
-        this->myUpdater.setLedPin(LED_PIN, LOW);
+        this->myUpdater.setLedPin(ACTIVITY_LED, LOW);
         char url[256];
         snprintf(url, sizeof(url), "https://github.com/Karmastic/BotC-Candles/releases/download/%s/firmware.bin", this->tag.c_str());
         auto result = this->myUpdater.update(this->client, url, "", requestCB);
