@@ -13,6 +13,10 @@
 #include "version.h"
 #include "WiFiConnectTask.h"
 
+#ifdef ESP32_32E
+#include "TouchDisplayTask.h"
+#endif // ESP32_32E
+
 #define LED_BLINK_INTERVAL_MS (500 * 1000)
 
 static SavedConfig config;
@@ -44,6 +48,12 @@ void setup()
     ActivityLEDTask *activityLEDTask = new ActivityLEDTask(pDebug, ACTIVITY_LED, LED_BLINK_INTERVAL_MS);
     appTasks->AddTask(activityLEDTask);
     appTasks->ActivateTask(ActivityLEDTask::TaskName);
+
+#ifdef ESP32_32E
+    TouchDisplayTask *dt = new TouchDisplayTask(pDebug);
+    appTasks->AddTask(dt);
+    appTasks->ActivateTask(TouchDisplayTask::TaskName);
+#endif // ESP32_32E
 
     std::function<void(void)> wifiCB = [appTasks, activityLEDTask, pDebug](void) -> void
     {
