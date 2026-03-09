@@ -1,6 +1,9 @@
 #include <WiFi.h>
 
 #include "AppTasks.h"
+#include "IDisplay.h"
+#include "Interfaces.h"
+#include "Registry.h"
 #include "WiFiConnectTask.h"
 
 const char *WiFiConnectTask::TaskName = "WiFiConnectTask";
@@ -37,9 +40,21 @@ void WiFiConnectTask::loop()
 
     if (WiFi.status() == WL_CONNECTED)
     {
+        char bufIP[32];
+        strncpy(bufIP, WiFi.localIP().toString().c_str(), sizeof(bufIP));
+
         this->debugOutput->println("\nWiFi connected");
-        this->debugOutput->print("IP address: ");
-        this->debugOutput->println(WiFi.localIP());
+        this->debugOutput->printf("IP address: %s\n", bufIP);
+
+        IDisplay *d = (IDisplay *)Registry::GetInterface(Interfaces::Display);
+        if (d == nullptr)
+        {
+            this->debugOutput->print("No Display registered...");
+        }
+        else
+        {
+            d->WriteLine(1, 2, bufIP);
+        }
 
         this->connectedCallback();
     }

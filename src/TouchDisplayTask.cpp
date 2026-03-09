@@ -11,6 +11,7 @@
 #include <SPI.h>
 #include <XPT2046_Touchscreen.h>
 
+#include "Registry.h"
 #include "TouchDisplayTask.h"
 
 #define TFT_BL 21
@@ -37,6 +38,8 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(&hspi, TFT_DC, TFT_CS, TFT_RST);
 
 const char *TouchDisplayTask::TaskName = "TouchDisplayTask";
 
+static String label;
+
 TouchDisplayTask::TouchDisplayTask(IDebugStream *debugOutput) : Task(debugOutput)
 {
 }
@@ -48,6 +51,8 @@ const char *TouchDisplayTask::Name()
 
 void TouchDisplayTask::setup()
 {
+    Registry::AddInterface(Interfaces::Display, (IDisplay*)this);
+
     // Note: The Adafruit librarys is not setting the backlight on, so we need to do that in code
     pinMode(TFT_BL, OUTPUT);
     digitalWrite(TFT_BL, HIGH);
@@ -66,12 +71,27 @@ void TouchDisplayTask::setup()
     ts.setRotation(1);
 }
 
+void TouchDisplayTask::WriteLine(uint8_t row, uint8_t size, const char *text)
+{
+    Serial.printf("WriteLine %d, %d, %s\n", (int)row, (int)size, text);
+
+    tft.fillScreen(ILI9341_BLACK);
+    tft.setTextSize(size);
+    tft.setTextColor(ILI9341_CYAN);
+    tft.setCursor(5, 20 * row);
+    tft.print(text);
+
+    Serial.println("Writing Line...");
+
+    label = text;
+}
+
 void touch_me(uint16_t color)
 {
     tft.setTextSize(2);
     tft.setTextColor(color);
     tft.setCursor(30, 10);
-    tft.print("Touch Test.... Touch me");
+    tft.print(label);
     tft.setTextSize(1);
 }
 
@@ -107,17 +127,17 @@ void TouchDisplayTask::loop()
     }
     else
     {
-        if (wastouched)
-        {
-            tft.fillScreen(ILI9341_BLACK);
-            tft.setTextColor(ILI9341_RED);
-            tft.setCursor(120, 50);
-            tft.print("No");
-            tft.setCursor(80, 120);
-            tft.print("Touch");
-            touch_me(ILI9341_CYAN);
-        }
-        Serial.println("no touch");
+        // if (wastouched)
+        // {
+        //     tft.fillScreen(ILI9341_BLACK);
+        //     tft.setTextColor(ILI9341_RED);
+        //     tft.setCursor(120, 50);
+        //     tft.print("No");
+        //     tft.setCursor(80, 120);
+        //     tft.print("Touch");
+        //     touch_me(ILI9341_CYAN);
+        // }
+        // Serial.println("no touch");
     }
     wastouched = istouched;
 }
