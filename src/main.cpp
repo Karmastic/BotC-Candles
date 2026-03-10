@@ -53,6 +53,10 @@ void setup()
     TouchDisplayTask *dt = new TouchDisplayTask(pDebug);
     appTasks->AddTask(dt);
     appTasks->ActivateTask(TouchDisplayTask::TaskName);
+
+    char buf[64];
+    snprintf(buf, sizeof(buf), "BotC-Candles v%s", APP_VERSION);
+    dt->WriteLine(0, 2, buf);
 #endif // ESP32_32E
 
     std::function<void(void)> wifiCB = [appTasks, activityLEDTask, pDebug](void) -> void

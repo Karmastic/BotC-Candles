@@ -53,7 +53,9 @@ void WiFiConnectTask::loop()
         }
         else
         {
-            d->WriteLine(1, 2, bufIP);
+            char buf[64];
+            snprintf(buf, sizeof(buf), "Connect to: %s", bufIP);
+            d->WriteLine(1, 2, buf);
         }
 
         this->connectedCallback();
