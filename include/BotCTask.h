@@ -8,15 +8,18 @@
 #include "Task.h"
 #include "WSClient.h"
 
-class BotCTask : public Task, private WSClient, private AsyncWebServer {
-public:    
-    BotCTask(IDebugStream *debugOutput, SavedConfig& config);
+class BotCTask : public Task, private WSClient, private AsyncWebServer
+{
+public:
+    BotCTask(IDebugStream *debugOutput, SavedConfig &config);
 
-    bool SendText(const char *message) {
+    bool SendText(const char *message)
+    {
         return WSClient::SendText(message);
     }
 
-    void Clear() {
+    void Clear()
+    {
         this->candleOperator.Clear();
     }
 
@@ -24,10 +27,11 @@ public:
     static const char *TaskName;
 
     // WSClient overrides
-    virtual void handlePayload(uint8_t * payload, size_t length);
+    virtual void handlePayload(uint8_t *payload, size_t length);
 
     // WebServer implementation
     void handleNotFound(AsyncWebServerRequest *request);
+    void handleGetAPI(AsyncWebServerRequest *request);
     void handleUpdate(AsyncWebServerRequest *request);
     void handleClear(AsyncWebServerRequest *request);
     void handleInstallUpdate(AsyncWebServerRequest *request, String tag);

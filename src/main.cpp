@@ -2,6 +2,8 @@
 
 #include <WiFi.h>
 
+#define APP_VERSION_EXT "-dev"
+
 #include "main.h"
 #include "ActivityLEDTask.h"
 #include "AppTasks.h"
@@ -55,7 +57,7 @@ void setup()
     appTasks->ActivateTask(TouchDisplayTask::TaskName);
 
     char buf[64];
-    snprintf(buf, sizeof(buf), "BotC-Candles v%s", APP_VERSION);
+    snprintf(buf, sizeof(buf), "BotC-Candles v%s%s", APP_VERSION, APP_VERSION_EXT);
     dt->WriteLine(0, 2, buf);
 #endif // ESP32_32E
 
