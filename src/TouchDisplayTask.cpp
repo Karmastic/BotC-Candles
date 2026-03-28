@@ -75,10 +75,9 @@ void TouchDisplayTask::WriteLine(uint8_t row, uint8_t size, const char *text)
 {
     Serial.printf("WriteLine %d, %d, %s\n", (int)row, (int)size, text);
 
-    tft.fillScreen(ILI9341_BLACK);
     tft.setTextSize(size);
     tft.setTextColor(ILI9341_CYAN);
-    tft.setCursor(5, 20 * row);
+    tft.setCursor(5, 5 + 20 * row);
     tft.print(text);
 
     Serial.println("Writing Line...");

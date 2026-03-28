@@ -9,6 +9,8 @@ const char *BotCTask::TaskName = "BotCTask";
 const char *STATUS_MESSAGE = "candle_status_update";
 const char *REQUEST_STATUS_MESSAGE = "{\"event\":\"request_candle_status_update\"}";
 
+const char *API_RESPONSE = "API:<br/>/u - Update LEDs from server<br/>/c - Clear LEDs<br/>/i?tag=<tag> - Install specific tag";
+
 const uint8_t pins[] = CANDLE_LED_PINS;
 
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
@@ -38,6 +40,8 @@ void BotCTask::setup()
     this->connect();
 
     AsyncWebServer::onNotFound(std::bind(&BotCTask::handleNotFound, this, std::placeholders::_1));
+    AsyncWebServer::on(AsyncURIMatcher::exact("/api"), HTTP_GET, [this](AsyncWebServerRequest *request)
+                       { this->handleGetAPI(request); });
     AsyncWebServer::on(AsyncURIMatcher::exact("/u"), HTTP_GET, [this](AsyncWebServerRequest *request)
                        { this->handleUpdate(request); });
     AsyncWebServer::on(AsyncURIMatcher::exact("/c"), HTTP_GET, [this](AsyncWebServerRequest *request)
@@ -92,6 +96,11 @@ void BotCTask::handlePayload(uint8_t *payload, size_t length)
 void BotCTask::handleNotFound(AsyncWebServerRequest *request)
 {
     request->send(404, "text/plain", "Not found");
+}
+
+void BotCTask::handleGetAPI(AsyncWebServerRequest *request)
+{
+    request->send(200, "text/html", API_RESPONSE);
 }
 
 void BotCTask::handleUpdate(AsyncWebServerRequest *request)
