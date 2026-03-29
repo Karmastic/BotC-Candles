@@ -2,8 +2,6 @@
 
 #include <WiFi.h>
 
-#define APP_VERSION_EXT "-dev"
-
 #include "main.h"
 #include "ActivityLEDTask.h"
 #include "AppTasks.h"
@@ -12,6 +10,7 @@
 #include "SerialDebugStream.h"
 #include "SavedConfig.h"
 #include "SelectNetworkTask.h"
+#include "overrides.h"
 #include "version.h"
 #include "WiFiConnectTask.h"
 
