@@ -50,7 +50,7 @@ jobs:
           bash ./scripts/bump-version.sh ${{ github.event.inputs.release_type }}
           echo NEW_VERSION=$(cat version.txt) >> $GITHUB_ENV
           echo "#define APP_VERSION \"$(cat version.txt)\"" > include/version.h
-          echo "#define APP_VERSION_EXT" "" >> include/version.h
+          echo "#define APP_VERSION_EXT" \"\" >> include/version.h
 
       - name: Build PlatformIO Project - ESP32-DevKit
         run: pio run --environment ESP32-DevKit
