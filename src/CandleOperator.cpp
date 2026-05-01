@@ -2,8 +2,8 @@
 
 #include "CandleOperator.h"
 
-CandleOperator::CandleOperator(uint8_t ledsPerCandle, uint8_t ledsPerPin, const uint8_t *pins, size_t pinCount, float_t animationFadeRate, uint8_t maxBrightness)
-    : ledsPerCandle(ledsPerCandle), ledsPerPin(ledsPerPin), pins(pins), pinCount(pinCount), animationFadeRate(animationFadeRate), maxBrightness(maxBrightness)
+CandleOperator::CandleOperator(uint8_t ledsPerCandle, uint8_t ledsPerPin, const uint8_t *pins, size_t pinCount, float_t animationFadeRate, uint8_t maxBrightness, int32_t wickLEDIndex)
+    : ledsPerCandle(ledsPerCandle), ledsPerPin(ledsPerPin), pins(pins), pinCount(pinCount), animationFadeRate(animationFadeRate), maxBrightness(maxBrightness), wickLEDIndex(wickLEDIndex)
 {
 
     this->pixels = new Adafruit_NeoPixel *[pinCount];
@@ -82,25 +82,37 @@ void CandleOperator::SetCandleState(uint8_t candleIndex, uint32_t color, bool fl
     uint8_t r = (color >> 16) & 0xFF;
     uint8_t g = (color >> 8) & 0xFF;
     uint8_t b = color & 0xFF;
+    uint8_t rF;
+    uint8_t gF;
+    uint8_t bF;
 
     if (flickering)
     {
-        r = (r * this->animationPercent) / 100;
-        g = (g * this->animationPercent) / 100;
-        b = (b * this->animationPercent) / 100;
+        // int32_t pct = random(this->maxBrightness);
+        // rF = (r * pct) / 100;
+        // gF = (g * pct) / 100;
+        // bF = (b * pct) / 100;
+        rF = (r * this->animationPercent) / 100;
+        gF = (g * this->animationPercent) / 100;
+        bF = (b * this->animationPercent) / 100;
+        r = 0;
+        g = 0;
+        b = 0;
     }
     else
     {
-        r = (r * this->maxBrightness) / 100;
-        g = (g * this->maxBrightness) / 100;
-        b = (b * this->maxBrightness) / 100;
+        rF = r = (r * this->maxBrightness) / 100;
+        gF = g = (g * this->maxBrightness) / 100;
+        bF = b = (b * this->maxBrightness) / 100;
     }
 
     color = (r << 16) | (g << 8) | b;
+    uint32_t colorF = (rF << 16) | (gF << 8) | bF;
 
-    for (uint8_t i = ledStartIndex; i < ledStartIndex + this->ledsPerCandle; i++)
+    for (uint8_t i = 0; i < this->ledsPerCandle; i++)
     {
-        this->pixels[pin]->setPixelColor(i, color);
+        uint32_t c = (flickering && this->flickerCandleIndex(i)) ? colorF : color;
+        this->pixels[pin]->setPixelColor(i + ledStartIndex, c);
     }
 }
 

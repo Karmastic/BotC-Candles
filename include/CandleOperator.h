@@ -5,7 +5,7 @@
 
 class CandleOperator {
 public:
-    CandleOperator(uint8_t ledsPerCandle, uint8_t ledsPerPin, const uint8_t *pins, size_t pinCount, float_t animationFadeRate = 0.1, uint8_t maxBrightnessPercent = 100);
+    CandleOperator(uint8_t ledsPerCandle, uint8_t ledsPerPin, const uint8_t *pins, size_t pinCount, float_t animationFadeRate = 0.1, uint8_t maxBrightnessPercent = 100, int32_t wickLEDIndex = -1);
 
     void Clear();
 
@@ -17,6 +17,11 @@ private:
     void SetCandleState(uint8_t candleIndex, uint32_t color, bool flickering);
     void Apply();
 
+    bool flickerCandleIndex(uint8_t ledIndex)
+    {
+        return this->wickLEDIndex == -1 || ledIndex == this->wickLEDIndex;
+    }
+
     uint8_t ledsPerCandle;
     uint8_t ledsPerPin;
     const uint8_t *pins;
@@ -24,6 +29,7 @@ private:
     uint8_t maxCandles;
     uint8_t maxBrightness;
     float_t animationFadeRate;
+    int32_t wickLEDIndex; // Index of the LED used for the wick (for flickering) -1 if all LEDs flicker
     uint8_t candleCount; // Number of candles currently set (so we can clear candles that are no longer included)
 
     Adafruit_NeoPixel **pixels;

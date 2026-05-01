@@ -11,9 +11,16 @@ const char *REQUEST_STATUS_MESSAGE = "{\"event\":\"request_candle_status_update\
 
 const char *API_RESPONSE = "API:<br/>/u - Update LEDs from server<br/>/c - Clear LEDs<br/>/i?tag=<tag> - Install specific tag";
 
-const uint8_t pins[] = CANDLE_LED_PINS;
-
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
+
+const uint8_t LEDS_PER_CANDLE           = 6;
+const int32_t WICK_LED_INDEX            = 5; // Index of the LED used for the wick (for flickering) -1 if all LEDs flicker
+const float_t FLICKER_FADE_RATE         = 0.15;
+const uint8_t MAX_BRIGHTNESS_PERCENT    = 50;
+const uint8_t pins[]                    = CANDLE_LED_PINS;
+const uint8_t MAX_CANDLES               = 32;
+
+const uint8_t LEDS_PER_PIN              = (LEDS_PER_CANDLE * MAX_CANDLES) / countof(pins);
 
 static const char *urlFromConfig(SavedConfig &config)
 {
@@ -24,7 +31,10 @@ static const char *urlFromConfig(SavedConfig &config)
 }
 
 BotCTask::BotCTask(IDebugStream *debugOutput, SavedConfig &config)
-    : Task(debugOutput), WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000), candleOperator(2, 6, pins, countof(pins), 0.05, 50), AsyncWebServer(80)
+    : Task(debugOutput)
+    , WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000)
+    , candleOperator(LEDS_PER_CANDLE, LEDS_PER_PIN, pins, countof(pins), FLICKER_FADE_RATE, MAX_BRIGHTNESS_PERCENT, WICK_LED_INDEX)
+    , AsyncWebServer(80)
 {
     this->config = config;
 }
@@ -48,12 +58,12 @@ void BotCTask::setup()
                        { this->handleClear(request); });
     AsyncWebServer::on(AsyncURIMatcher::exact("/i"), HTTP_GET, [this](AsyncWebServerRequest *request)
                        {
-        String tag;
-        if (request->hasParam("tag", false))
-        {
-            tag = request->getParam("tag", false)->value();
-        }
-        this->handleInstallUpdate(request, tag); });
+                            String tag;
+                            if (request->hasParam("tag", false))
+                            {
+                                tag = request->getParam("tag", false)->value();
+                            }
+                            this->handleInstallUpdate(request, tag); });
 
     AsyncWebServer::begin();
 
