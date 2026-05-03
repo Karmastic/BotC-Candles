@@ -2,10 +2,9 @@
 
 #include "CandleOperator.h"
 
-CandleOperator::CandleOperator(uint8_t ledsPerCandle, uint8_t ledsPerPin, const uint8_t *pins, size_t pinCount, float_t animationFadeRate, uint8_t maxBrightness, int32_t wickLEDIndex)
-    : ledsPerCandle(ledsPerCandle), ledsPerPin(ledsPerPin), pins(pins), pinCount(pinCount), animationFadeRate(animationFadeRate), maxBrightness(maxBrightness), wickLEDIndex(wickLEDIndex)
+CandleOperator::CandleOperator(IDebugStream *debugOutput, uint8_t ledsPerCandle, uint8_t ledsPerPin, const uint8_t *pins, size_t pinCount, float_t animationFadeRate, uint8_t maxBrightness, int32_t wickLEDIndex)
+    : debugOutput(debugOutput), ledsPerCandle(ledsPerCandle), ledsPerPin(ledsPerPin), pins(pins), pinCount(pinCount), animationFadeRate(animationFadeRate), maxBrightness(maxBrightness), wickLEDIndex(wickLEDIndex)
 {
-
     this->pixels = new Adafruit_NeoPixel *[pinCount];
 
     for (size_t i = 0; i < pinCount; i++)
@@ -113,6 +112,11 @@ void CandleOperator::SetCandleState(uint8_t candleIndex, uint32_t color, bool fl
     {
         uint32_t c = (flickering && this->flickerCandleIndex(i)) ? colorF : color;
         this->pixels[pin]->setPixelColor(i + ledStartIndex, c);
+    }
+
+    if (candleIndex >= this->pinCount)
+    {
+        this->debugOutput->printf(" > Candle wrap-around. Candle %d - ledStartIndex = %d\n", candleIndex, ledStartIndex);
     }
 }
 

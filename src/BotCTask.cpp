@@ -33,7 +33,7 @@ static const char *urlFromConfig(SavedConfig &config)
 BotCTask::BotCTask(IDebugStream *debugOutput, SavedConfig &config)
     : Task(debugOutput)
     , WSClient(debugOutput, SavedConfig::Host, urlFromConfig(config), true, 443, 1000)
-    , candleOperator(LEDS_PER_CANDLE, LEDS_PER_PIN, pins, countof(pins), FLICKER_FADE_RATE, MAX_BRIGHTNESS_PERCENT, WICK_LED_INDEX)
+    , candleOperator(debugOutput, LEDS_PER_CANDLE, LEDS_PER_PIN, pins, countof(pins), FLICKER_FADE_RATE, MAX_BRIGHTNESS_PERCENT, WICK_LED_INDEX)
     , AsyncWebServer(80)
 {
     this->config = config;

@@ -8,7 +8,7 @@
 #define RESET_CONFIG_INPUT 14
 #define RESET_CONFIG_INPUT_MODE INPUT
 #define RESET_CONFIG_INPUT_STATE LOW
-#define CANDLE_LED_PINS {13, 12}
+#define CANDLE_LED_PINS {12, 13, 32, 25}
 
 #elif defined ESP32_32E // LCD/Touchscreen
 
