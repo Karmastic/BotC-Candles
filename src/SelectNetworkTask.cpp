@@ -1,9 +1,16 @@
 #include <Arduino.h>
+#include <DNSServer.h>
 #include <WiFi.h>
 
 #include "SelectNetworkTask.h"
 
 const char *SelectNetworkTask::TaskName = "SelectNetworkTask";
+
+const byte DNS_PORT = 53;
+static IPAddress apIP(192, 168, 4, 1);
+static IPAddress netMsk(255, 255, 255, 0);
+
+static DNSServer dnsServer;
 
 SelectNetworkTask::SelectNetworkTask(IDebugStream *debug, std::function<void(const char *ssid, const char *pwd)> wifiSelectedCB)
     : Task(debug), AsyncWebServer(80)
@@ -27,11 +34,12 @@ void SelectNetworkTask::setup()
             this->ssidList.push_back(buf);
         }
 
-        AsyncWebServer::onNotFound(std::bind(&SelectNetworkTask::handleNotFound, this, std::placeholders::_1));
+        AsyncWebServer::onNotFound([this](AsyncWebServerRequest *request)
+                                   { this->handleRoot(request); });
         AsyncWebServer::on(AsyncURIMatcher::exact("/"), HTTP_GET, [this](AsyncWebServerRequest *request)
-                        { this->handleRoot(request); });
+                           { this->handleRoot(request); });
         AsyncWebServer::on(AsyncURIMatcher::exact("/usewifi"), HTTP_POST, [this](AsyncWebServerRequest *request)
-                        { this->handleSelectionSubmit(request); });
+                           { this->handleSelectionSubmit(request); });
     }
     else
     {
@@ -39,22 +47,22 @@ void SelectNetworkTask::setup()
     }
 
     snprintf(buf, sizeof(buf), "BotC-%06X", ESP.getEfuseMac() & 0xFFFFFF);
+    WiFi.softAPConfig(apIP, apIP, netMsk);
     WiFi.softAP(buf, nullptr, 1, false);
 
     AsyncWebServer::begin();
+
+    // DNS Server setup
+    dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+    dnsServer.start(DNS_PORT, "*", apIP);
 
     this->debugOutput->printf("HTTP server started on %s\n", WiFi.softAPIP().toString().c_str());
 }
 
 void SelectNetworkTask::loop()
 {
+    dnsServer.processNextRequest();
     delay(10);
-}
-
-void SelectNetworkTask::handleNotFound(AsyncWebServerRequest *request)
-{
-    this->debugOutput->println("Received unknown HTTP request");
-    request->send(404, "text/plain", "Not found");
 }
 
 void SelectNetworkTask::handleRoot(AsyncWebServerRequest *request)
@@ -91,6 +99,7 @@ void SelectNetworkTask::handleSelectionSubmit(AsyncWebServerRequest *request)
 
     delay(1000);
     AsyncWebServer::end();
+    dnsServer.stop();
     WiFi.softAPdisconnect();
 
     this->cb(ssid.c_str(), pwd.c_str());
