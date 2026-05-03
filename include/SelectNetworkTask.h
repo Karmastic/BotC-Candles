@@ -23,7 +23,6 @@ public:
     void loop() override;
 
     // WebServer implementation
-    void handleNotFound(AsyncWebServerRequest *request);
     void handleRoot(AsyncWebServerRequest *request);
     void handleSelectionSubmit(AsyncWebServerRequest *request);
 
