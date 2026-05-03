@@ -3,9 +3,11 @@
 #include <ArduinoJson.h>
 #include <Adafruit_NeoPixel.h>
 
+#include "IDebugStream.h"
+
 class CandleOperator {
 public:
-    CandleOperator(uint8_t ledsPerCandle, uint8_t ledsPerPin, const uint8_t *pins, size_t pinCount, float_t animationFadeRate = 0.1, uint8_t maxBrightnessPercent = 100, int32_t wickLEDIndex = -1);
+    CandleOperator(IDebugStream *debugOutput, uint8_t ledsPerCandle, uint8_t ledsPerPin, const uint8_t *pins, size_t pinCount, float_t animationFadeRate = 0.1, uint8_t maxBrightnessPercent = 100, int32_t wickLEDIndex = -1);
 
     void Clear();
 
@@ -21,6 +23,8 @@ private:
     {
         return this->wickLEDIndex == -1 || ledIndex == this->wickLEDIndex;
     }
+
+    IDebugStream *debugOutput;
 
     uint8_t ledsPerCandle;
     uint8_t ledsPerPin;
